@@ -91,7 +91,8 @@ TRANSLATOR_NOVEL_MAP = {
         "I Want to Avoid the Bad Ending"
     ],
     "ciasuraimu": [
-        "If You Want To Frame Me As a Villainess, I Will Be The Villainess. However."
+        "If You Want To Frame Me As a Villainess, I Will Be The Villainess. However.",
+        "Proof of the Demon Lord's Innocence"
     ],
     "Yijuan": [
         "Waiting for the Stars to Fall",
@@ -283,6 +284,8 @@ def get_featured_image(title):
         return "https://dragonholic.com/wp-content/uploads/2025/01/20240429163423_200_280.jpg"
     if "Honkai: Star Rail, My Journey with Tom" in title:
         return "https://dragonholic.com/wp-content/uploads/2025/02/Star-rail-novel-cover.jpg"
+    if "Proof of the Demon Lord's Innocence" in title:
+        return "https://dragonholic.com/wp-content/uploads/2025/01/魔王陛下の無罪証明.jpg"
     
     # If no image is found for the novel, return an empty string.
     return ""
