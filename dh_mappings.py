@@ -111,10 +111,10 @@ TRANSLATOR_NOVEL_MAP = {
     ],
     "kuro": [
         "The Unspoken Vow"
-    ]
+    ],
      "Nianger": [
         "Mistakenly Treated the Princess as a Concubine"
-    ]
+    ],
      "Wolffy": [
         "Honkai: Star Rail, My Journey with Tom"
     ]
