@@ -140,8 +140,8 @@ DISCORD_ROLE_ID_MAP = {
     "emberblood": "<@&1323169218262335519>",
     "Beryline": "<@&1323169289058127944>",
     "Sia": "<@&1323169355948752967>",
-    "Thyllia": "<@unknown>",
-    "kuro": "<@unknown>"
+    "Thyllia": "<@&1341625811828215819>",
+    "kuro": "<@&1341625880845221919>"
 }
 
 def get_translator(title):
