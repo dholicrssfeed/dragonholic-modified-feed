@@ -70,7 +70,7 @@ TRANSLATOR_NOVEL_MAP = {
         "Gloria von Caldwell's Condemnation and Revenge"
     ],
     "An'er": [
-        "After transmigrating, I and the female lead both found it 'really fragrant' (GL)",
+        "After Transmigrating, I and the Female Lead Both Found It 'Really Fragrant' (GL)",
         "The Female Lead is Looking at Me Differently (GL)",
         "A Moment Too Late (GL)",
         "The Male Lead's Harem Belongs to Me (GL)",
@@ -241,7 +241,7 @@ def get_featured_image(title):
         return "https://dragonholic.com/wp-content/uploads/2024/11/9081b7c3f61d976fd2e16d91ae58f04d.jpeg"
     if "Gloria von Caldwell's Condemnation and Revenge" in title:
         return "https://dragonholic.com/wp-content/uploads/2024/12/file-7TuN1ag8iWABh9WqdMESHF.webp"
-    if "After transmigrating, I and the female lead both found it 'really fragrant' (GL)" in title:
+    if "After Transmigrating, I and the Female Lead Both Found It 'Really Fragrant' (GL)" in title:
         return "https://dragonholic.com/wp-content/uploads/2024/11/download-1.jpeg"
     if "The Female Lead is Looking at Me Differently (GL)" in title:
         return "https://dragonholic.com/wp-content/uploads/2024/10/download-3.jpeg"
