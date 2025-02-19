@@ -112,6 +112,12 @@ TRANSLATOR_NOVEL_MAP = {
     "kuro": [
         "The Unspoken Vow"
     ]
+     "Nianger": [
+        "Mistakenly Treated the Princess as a Concubine"
+    ]
+     "Wolffy": [
+        "Honkai: Star Rail, My Journey with Tom"
+    ]
 }
 
 # Mapping for Discord role IDs.
@@ -142,6 +148,8 @@ DISCORD_ROLE_ID_MAP = {
     "Sia": "<@&1323169355948752967>",
     "Thyllia": "<@&1341625811828215819>",
     "kuro": "<@&1341625880845221919>"
+    "Nianger": "<@&1328167570737594431>"
+    "Wolffy": "<@&953602322045501460>"
 }
 
 def get_translator(title):
