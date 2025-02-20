@@ -114,7 +114,7 @@ TRANSLATOR_NOVEL_MAP = {
         "The Unspoken Vow"
     ],
      "Niang'er": [
-        "Mistakenly treated the Princess as a Concubine"
+        "Mistakenly Treated The Princess As A Concubine"
     ],
      "Wolffy": [
         "Honkai: Star Rail, My Journey with Tom"
@@ -280,7 +280,7 @@ def get_featured_image(title):
         return "https://dragonholic.com/wp-content/uploads/2024/12/20241207081825_200_280.jpg"
     if "The Unspoken Vow" in title:
         return "https://dragonholic.com/wp-content/uploads/2025/01/xxlarge.webp"
-    if "Mistakenly treated the Princess as a Concubine" in title:
+    if "Mistakenly Treated The Princess As A Concubine" in title:
         return "https://dragonholic.com/wp-content/uploads/2025/01/20240429163423_200_280.jpg"
     if "Honkai: Star Rail, My Journey with Tom" in title:
         return "https://dragonholic.com/wp-content/uploads/2025/02/Star-rail-novel-cover.jpg"
