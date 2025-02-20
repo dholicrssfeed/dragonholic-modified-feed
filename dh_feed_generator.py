@@ -39,14 +39,7 @@ class MyRSSItem(PyRSS2Gen.RSSItem):
         writer.write(indent + "  <item>" + newl)
         writer.write(indent + "    <title>%s</title>" % escape(self.title) + newl)
         writer.write(indent + "    <chaptername>%s</chaptername>" % escape(self.chaptername) + newl)
-        
-        # Conditionally wrap nameextend in *** if it is not empty.
-        if self.nameextend.strip():
-            formatted_nameextend = f"***{self.nameextend}***"
-        else:
-            formatted_nameextend = ""
-        writer.write(indent + "    <nameextend>%s</nameextend>" % escape(formatted_nameextend) + newl)
-        
+        writer.write(indent + "    <nameextend>%s</nameextend>" % escape(self.nameextend) + newl)
         writer.write(indent + "    <link>%s</link>" % escape(self.link) + newl)
         # Wrap description in CDATA to preserve HTML entities like &nbsp;
         writer.write(indent + "    <description><![CDATA[%s]]></description>" % self.description + newl)
@@ -58,7 +51,7 @@ class MyRSSItem(PyRSS2Gen.RSSItem):
         writer.write(indent + '    <featuredImage url="%s"/>' % escape(get_featured_image(self.title)) + newl)
         writer.write(indent + "    <pubDate>%s</pubDate>" % self.pubDate.strftime("%a, %d %b %Y %H:%M:%S +0000") + newl)
         writer.write(indent + "    <guid isPermaLink=\"%s\">%s</guid>" %
-                     (str(self.guid.isPermaLink).lower(), self.guid.guid) + newl)
+             (str(self.guid.isPermaLink).lower(), self.guid.guid) + newl)
         writer.write(indent + "  </item>" + newl)
 
 class CustomRSS2(PyRSS2Gen.RSS2):
