@@ -303,10 +303,10 @@ NOVEL_URL_OVERRIDES = {
     "Rebirth of the Excellent Daughter of the Marquis Household (REDMH)": "https://dragonholic.com/novel/redmh/",
     "The Eldest Legitimate Daughter is Both Beautiful and Valiant (ELDBBV)": "https://dragonholic.com/novel/eldbbv/",
     "Transmigrated into the Villain's Cannon Fodder Ex-Wife (Transmigrated into a Book)": "https://dragonholic.com/novel/transmigrated-as-the-villains-cannon-fodder-ex-wife/",
-    "When I started High School, My Childhood Friend, who had suddenly become distant and cold, was harassed by a stranger. I stepped in to help, and as a result, from the following day, My Childhood Friend's behavior became unusual.": "https://dragonholic.com/novel/when-i-started-high-school-my-childhood-friend-who-had-suddenly-become-distant-and-cold/",
-    "The Female Lead is Looking at Me Differently (GL)": "https://dragonholic.com/novel/the-female-lead-is-looking-at-me-differently-gl/",
-    "A Moment Too Late (GL)": "https://dragonholic.com/novel/a-moment-too-late-gl/",
-    "After Marrying the Disabled Prince (BG)": "https://dragonholic.com/novel/after-marrying-the-disabled-prince-bg/"
+    "When I started High School, My Childhood Friend, who had suddenly become distant and cold, was harassed by a stranger. I stepped in to help, and as a result, from the following day, My Childhood Friend's behavior became unusual.": "https://dragonholic.com/novel/when-i-started-high-school-my-childhood-friend-who-had-suddenly-become-distant-and-cold-was-harassed-by-a-stranger-i-stepped-in-to-help-and-as-a-result-from-the-following-day-my-childhood-frien/",
+    "The Female Lead is Looking at Me Differently (GL)": "https://dragonholic.com/novel/the-female-lead-is-looking-at-me-differently/",
+    "A Moment Too Late (GL)": "https://dragonholic.com/novel/gl-a-moment-too-late/",
+    "After Marrying the Disabled Prince (BG)": "https://dragonholic.com/novel/after-marrying-the-disabled-prince/"
 }
 
 def get_novel_url(title):
