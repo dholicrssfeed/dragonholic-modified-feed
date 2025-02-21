@@ -296,3 +296,32 @@ def get_discord_role_id(translator):
     If no role ID is found, returns an empty string.
     """
     return DISCORD_ROLE_ID_MAP.get(translator, "")
+
+# URL overrides for novels – fill in the correct URL for each novel as needed.
+NOVEL_URL_OVERRIDES = {
+    "Help others? It’s better to help yourself": "https://dragonholic.com/novel/helping-others-its-better-to-help-yourself/",
+    "Rebirth of the Excellent Daughter of the Marquis Household (REDMH)": "https://dragonholic.com/novel/redmh/",
+    "The Eldest Legitimate Daughter is Both Beautiful and Valiant (ELDBBV)": "https://dragonholic.com/novel/eldbbv/",
+    "Transmigrated into the Villain's Cannon Fodder Ex-Wife (Transmigrated into a Book)": "https://dragonholic.com/novel/transmigrated-as-the-villains-cannon-fodder-ex-wife/",
+    "When I started High School, My Childhood Friend, who had suddenly become distant and cold, was harassed by a stranger. I stepped in to help, and as a result, from the following day, My Childhood Friend's behavior became unusual.": "https://dragonholic.com/novel/when-i-started-high-school-my-childhood-friend-who-had-suddenly-become-distant-and-cold/",
+    "The Female Lead is Looking at Me Differently (GL)": "https://dragonholic.com/novel/the-female-lead-is-looking-at-me-differently-gl/",
+    "A Moment Too Late (GL)": "https://dragonholic.com/novel/a-moment-too-late-gl/",
+    "After Marrying the Disabled Prince (BG)": "https://dragonholic.com/novel/after-marrying-the-disabled-prince-bg/"
+}
+
+def get_novel_url(title):
+    """
+    Returns the main page URL for the given novel title.
+    First checks NOVEL_URL_OVERRIDES for a manual override.
+    If none exists, constructs the URL using a slug.
+    """
+    if title in NOVEL_URL_OVERRIDES and NOVEL_URL_OVERRIDES[title]:
+        return NOVEL_URL_OVERRIDES[title]
+    # Fallback: create URL from slug
+    def slugify(text):
+        text = text.lower()
+        import re
+        text = re.sub(r'[^\w\s-]', '', text)
+        return re.sub(r'[\s]+', '-', text)
+    return f"https://dragonholic.com/novel/{slugify(title)}/"
+
