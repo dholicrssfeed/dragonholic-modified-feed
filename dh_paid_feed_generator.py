@@ -249,26 +249,12 @@ def main():
                 )
                 rss_items.append(item)
 
-    # First, sort all items by pubDate (newest first)
-    rss_items.sort(key=lambda item: item.pubDate, reverse=True)
-
-    # Group items with the same pubDate and then, for those with the same novel title, sort by chapter number (descending)
-    new_rss_items = []
-    for pub_date, group in groupby(rss_items, key=lambda item: item.pubDate):
-        group_list = list(group)
-        # Group by novel title within the same pubDate
-        grouped_by_title = {}
-        for item in group_list:
-            grouped_by_title.setdefault(item.title, []).append(item)
-        # For each novel title, if there are multiple chapters, sort by chapter number descending
-        for title, items in grouped_by_title.items():
-            if len(items) > 1:
-                items.sort(key=lambda item: extract_chapter_number(item.chaptername), reverse=True)
-            new_rss_items.extend(items)
-
-    # Finally, sort the overall list by pubDate (newest first)
-    new_rss_items.sort(key=lambda item: item.pubDate, reverse=True)
-    rss_items = new_rss_items
+    # --- Revised Sorting Logic ---
+    # First, sort by chapter number descending (to set order within same novel)
+    rss_items.sort(key=lambda item: extract_chapter_number(item.chaptername), reverse=True)
+    # Then, stable sort by pubDate and novel title descending.
+    rss_items.sort(key=lambda item: (item.pubDate, item.title), reverse=True)
+    # --- End Sorting Logic ---
 
     new_feed = CustomRSS2(
         title="Dragonholic Paid Chapters",
