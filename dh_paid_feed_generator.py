@@ -89,11 +89,50 @@ def chapter_num(chapname):
     except Exception:
         return 0
 
+def normalize_date(dt):
+    """Normalizes a datetime by removing microseconds."""
+    return dt.replace(microsecond=0)
+
+def novel_has_paid_update(novel_url):
+    """
+    Quickly checks if the novel page has a recent premium (paid/locked) update.
+    Loads the page, finds the first chapter element, and if it has the 'premium' class
+    (and not 'free-chap') and its release date is within the last 7 days, returns True.
+    """
+    try:
+        response = requests.get(novel_url, timeout=10)
+        response.raise_for_status()
+    except Exception as e:
+        print(f"Error fetching {novel_url} for quick check: {e}")
+        return False
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    chapter_li = soup.find("li", class_="wp-manga-chapter")
+    if chapter_li:
+        classes = chapter_li.get("class", [])
+        if "premium" in classes and "free-chap" not in classes:
+            pub_span = chapter_li.find("span", class_="chapter-release-date")
+            if pub_span:
+                i_tag = pub_span.find("i")
+                if i_tag:
+                    date_str = i_tag.get_text(strip=True)
+                    try:
+                        pub_dt = datetime.datetime.strptime(date_str, "%B %d, %Y").replace(tzinfo=datetime.timezone.utc)
+                    except Exception:
+                        pub_dt = datetime.datetime.now(datetime.timezone.utc)
+                    now = datetime.datetime.now(datetime.timezone.utc)
+                    if pub_dt >= now - datetime.timedelta(days=7):
+                        return True
+            else:
+                return True
+    return False
+
 def scrape_paid_chapters(novel_url):
     """
     Fetches the novel page and extracts:
       - Main description from <div class="description-summary">.
-      - All paid chapters (excluding free chapters) from <li class="wp-manga-chapter"> elements.
+      - Paid chapters (excluding free chapters) from <li class="wp-manga-chapter"> elements.
+    Only processes chapters whose pubDate is within the last 7 days.
     Returns a tuple: (list_of_chapters, main_description)
     Each chapter dict contains: "chaptername", "nameextend", "link", "description",
     "pubDate", "guid", and "coin".
@@ -116,10 +155,19 @@ def scrape_paid_chapters(novel_url):
     
     chapters = soup.find_all("li", class_="wp-manga-chapter")
     paid_chapters = []
+    now = datetime.datetime.now(datetime.timezone.utc)
     print(f"Found {len(chapters)} chapter elements on {novel_url}")
     for chap in chapters:
+        # Skip free chapters.
         if "free-chap" in chap.get("class", []):
             continue
+
+        # Get publication date first.
+        pub_dt = extract_pubdate(chap)
+        # If this chapter is older than 7 days, stop processing further chapters.
+        if pub_dt < now - datetime.timedelta(days=7):
+            break
+
         a_tag = chap.find("a")
         if not a_tag:
             continue
@@ -141,7 +189,6 @@ def scrape_paid_chapters(novel_url):
         if not guid:
             parts = chap_number.split()
             guid = parts[-1] if parts else "unknown"
-        pub_dt = extract_pubdate(chap)
         coin_value = ""
         coin_span = chap.find("span", class_="coin")
         if coin_span:
@@ -173,19 +220,15 @@ class MyRSSItem(PyRSS2Gen.RSSItem):
         writer.write(indent + "    <nameextend>%s</nameextend>" % escape(formatted_nameextend) + newl)
         writer.write(indent + "    <link>%s</link>" % escape(self.link) + newl)
         writer.write(indent + "    <description><![CDATA[%s]]></description>" % self.description + newl)
-        
         nsfw_list = get_nsfw_novels()
         category_value = "NSFW" if self.title in nsfw_list else "SFW"
         writer.write(indent + "    <category>%s</category>" % escape(category_value) + newl)
-        
         translator = get_translator(self.title)
         writer.write(indent + "    <translator>%s</translator>" % (translator if translator else "") + newl)
-        
         discord_role = get_discord_role_id(translator)
         if category_value == "NSFW":
             discord_role += " <@&1304077473998442506>"
         writer.write(indent + "    <discord_role_id><![CDATA[%s]]></discord_role_id>" % discord_role + newl)
-        
         writer.write(indent + '    <featuredImage url="%s"/>' % escape(get_featured_image(self.title)) + newl)
         if self.coin:
             writer.write(indent + "    <coin>%s</coin>" % escape(self.coin) + newl)
@@ -230,12 +273,16 @@ class CustomRSS2(PyRSS2Gen.RSS2):
 
 def main():
     rss_items = []
-    # Iterate over each translator and their novel titles
+    # Iterate over each translator and their novel titles from the mapping.
     for translator, novel_titles in TRANSLATOR_NOVEL_MAP.items():
         for novel_title in novel_titles:
             title = novel_title  # title is a string
             novel_url = get_novel_url(title)
             print(f"Scraping: {novel_url}")
+            # Quick pre-check: if the novel does not have a recent premium update, skip it.
+            if not novel_has_paid_update(novel_url):
+                print(f"Skipping {title}: no recent premium update found.")
+                continue
             paid_chapters, main_desc = scrape_paid_chapters(novel_url)
             if not paid_chapters:
                 print(f"No chapters found for {title} at {novel_url}")
@@ -244,6 +291,7 @@ def main():
                 pub_date = chap["pubDate"]
                 if pub_date.tzinfo is None:
                     pub_date = pub_date.replace(tzinfo=datetime.timezone.utc)
+                # Since we're using the exact pubDate, we don't override it.
                 item = MyRSSItem(
                     title=title,
                     link=chap["link"],
@@ -256,31 +304,12 @@ def main():
                 )
                 rss_items.append(item)
     
-    # For chapters of the same novel, if the time difference is less than 3 hours, override pubDate with the maximum.
-    grouped = defaultdict(list)
+    # Sort by (normalized pubDate, then chapter number) in descending order.
+    rss_items.sort(key=lambda item: (normalize_date(item.pubDate), chapter_num(item.chaptername)), reverse=True)
+    
+    # Debug: print chapter numbers and pubDates for verification.
     for item in rss_items:
-        grouped[item.title].append(item)
-    for title, items in grouped.items():
-        if len(items) < 2:
-            continue
-        max_pub = max(item.pubDate for item in items)
-        min_pub = min(item.pubDate for item in items)
-        diff_hours = (max_pub - min_pub).total_seconds() / 3600.0
-        if diff_hours < 3:
-            for item in items:
-                item.pubDate = max_pub
-
-    # Now sort by pubDate, then title, then chapter number (using chapter_num for reliability)
-rss_items.sort(key=lambda item: (
-    item.pubDate,
-    item.title,
-    chapter_num(item.chaptername)
-), reverse=True)
-
-# Debug: print chapter numbers and pubDates for verification
-for item in rss_items:
-    print(f"{item.title} - {item.chaptername} ({chapter_num(item.chaptername)}) : {item.pubDate}")
-
+        print(f"{item.title} - {item.chaptername} ({chapter_num(item.chaptername)}) : {item.pubDate}")
     
     new_feed = CustomRSS2(
         title="Dragonholic Paid Chapters",
@@ -301,7 +330,7 @@ for item in rss_items:
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(pretty_xml)
     
-    # Debug: print chapter numbers and pubDates for verification
+    # Debug: print chapter numbers and pubDates again after feed generation.
     for item in rss_items:
         print(f"{item.title} - {item.chaptername} ({chapter_num(item.chaptername)}) : {item.pubDate}")
     
