@@ -4,7 +4,7 @@
     <title>Dragonholic - Feed</title>
     <link>https://dragonholic.com</link>
     <description/>
-    <lastBuildDate>Sat, 22 Feb 2025 02:38:53 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 22 Feb 2025 02:42:03 +0000</lastBuildDate>
     <docs>http://blogs.law.harvard.edu/tech/rss</docs>
     <generator>PyRSS2Gen-1.1.0</generator>
     <item>
@@ -6966,20 +6966,6 @@ That is all a misunderstanding.]]></description>
       <featuredImage url="https://dragonholic.com/wp-content/uploads/2025/01/IABMGS-Cover.jpg"/>
       <pubDate>Sat, 25 Jan 2025 07:15:32 +0000</pubDate>
       <guid isPermaLink="false">13936</guid>
-    </item>
-    <item>
-      <title>I Am Being Mistaken for a Genius Strategist</title>
-      <chaptername>Chapter 8</chaptername>
-      <nameextend/>
-      <link>https://dragonholic.com/novel/i-am-being-mistaken-for-a-genius-strategist/chapter-8/</link>
-      <description><![CDATA[I am not a Genius.
-I am not a Strategist.
-That is all a misunderstanding.]]></description>
-      <translator>Eastwalk</translator>
-      <discord_role_id><![CDATA[<@&1295581200706179112>]]></discord_role_id>
-      <featuredImage url="https://dragonholic.com/wp-content/uploads/2025/01/IABMGS-Cover.jpg"/>
-      <pubDate>Sat, 25 Jan 2025 07:01:47 +0000</pubDate>
-      <guid isPermaLink="false">13932</guid>
     </item>
   </channel>
 </rss>
