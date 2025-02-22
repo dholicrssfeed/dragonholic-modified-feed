@@ -18,8 +18,8 @@ from dh_mappings import (
     get_nsfw_novels
 )
 
-# Set up a semaphore to limit concurrency to 50 tasks.
-semaphore = asyncio.Semaphore(50)
+# Set up a semaphore to limit concurrency to 100 tasks.
+semaphore = asyncio.Semaphore(100)
 
 # ---------------- Helper Functions (Synchronous) ----------------
 
@@ -273,7 +273,7 @@ class CustomRSS2(PyRSS2Gen.RSS2):
 
 async def process_novel(session, novel_title):
     """Processes a single novel under the semaphore limit."""
-    async with semaphore:  # Limit concurrent processing to 50 novels.
+    async with semaphore:  # Limit concurrent processing to 100 novels.
         title = novel_title  # title is a string
         novel_url = get_novel_url(title)
         print(f"Scraping: {novel_url}")
