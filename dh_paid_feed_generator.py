@@ -223,7 +223,6 @@ class CustomRSS2(PyRSS2Gen.RSS2):
 
 def main():
     rss_items = []
-    # Iterate over each translator and their novel titles (strings)
     for translator, novel_titles in TRANSLATOR_NOVEL_MAP.items():
         for novel_title in novel_titles:
             title = novel_title  # title is a string
@@ -248,22 +247,11 @@ def main():
                     coin=chap.get("coin", "")
                 )
                 rss_items.append(item)
-    
-    # Group items by novel title and override pubDate within each group
-    grouped = {}
-    for item in rss_items:
-        grouped.setdefault(item.title, []).append(item)
-    for group in grouped.values():
-        # Use the maximum pubDate among items in the group
-        max_pub = max(item.pubDate for item in group)
-        for item in group:
-            item.pubDate = max_pub
 
-    # Now sort: first by pubDate (newest first), then by chapter number descending (within same novel)
+    # Now sort: by pubDate (newest first), then by chapter number descending
     rss_items.sort(
         key=lambda item: (
-            item.pubDate,
-            item.title,
+            item.pubDate, 
             extract_chapter_number(item.chaptername)
         ),
         reverse=True
