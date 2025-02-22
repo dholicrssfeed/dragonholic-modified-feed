@@ -5,7 +5,7 @@ import xml.dom.minidom
 from xml.sax.saxutils import escape
 
 # Import mapping functions from your mappings file (named dh_mappings.py)
-from dh_mappings import get_translator, get_featured_image, get_discord_role_id
+from dh_mappings import get_translator, get_featured_image, get_discord_role_id, get_nsfw_novels
 
 def split_title(full_title):
     """
@@ -56,9 +56,22 @@ class MyRSSItem(PyRSS2Gen.RSSItem):
         writer.write(indent + "    <nameextend>%s</nameextend>" % escape(formatted_nameextend) + newl)
         writer.write(indent + "    <link>%s</link>" % escape(self.link) + newl)
         writer.write(indent + "    <description><![CDATA[%s]]></description>" % self.description + newl)
+        
+        # New <category> element (placed below description, above translator)
+        nsfw_list = get_nsfw_novels()
+        category_value = "NSFW" if self.title in nsfw_list else "SFW"
+        writer.write(indent + "    <category>%s</category>" % escape(category_value) + newl)
+        
         translator = get_translator(self.title)
         writer.write(indent + "    <translator>%s</translator>" % (translator if translator else "") + newl)
-        writer.write(indent + "    <discord_role_id><![CDATA[%s]]></discord_role_id>" % get_discord_role_id(translator) + newl)
+        
+        # Get the original discord role id
+        discord_role = get_discord_role_id(translator)
+        # Append additional role if NSFW
+        if category_value == "NSFW":
+            discord_role += " <@&1304077473998442506>"
+        writer.write(indent + "    <discord_role_id><![CDATA[%s]]></discord_role_id>" % discord_role + newl)
+        
         writer.write(indent + '    <featuredImage url="%s"/>' % escape(get_featured_image(self.title)) + newl)
         writer.write(indent + "    <pubDate>%s</pubDate>" % self.pubDate.strftime("%a, %d %b %Y %H:%M:%S +0000") + newl)
         writer.write(indent + "    <guid isPermaLink=\"%s\">%s</guid>" % (str(self.guid.isPermaLink).lower(), self.guid.guid) + newl)
