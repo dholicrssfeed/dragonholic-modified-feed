@@ -18,6 +18,9 @@ from dh_mappings import (
     get_nsfw_novels
 )
 
+# Set up a semaphore to limit concurrency to 50 tasks.
+semaphore = asyncio.Semaphore(50)
+
 # ---------------- Helper Functions (Synchronous) ----------------
 
 def clean_description(raw_desc):
@@ -37,7 +40,7 @@ def split_title(full_title):
 
 def extract_pubdate_from_soup(chap):
     """
-    Extracts the publication date from a chapter element (BeautifulSoup object).
+    Extracts the publication date from a chapter element.
     Tries an absolute date (e.g. "February 16, 2025") or a relative date.
     """
     release_span = chap.find("span", class_="chapter-release-date")
@@ -92,13 +95,13 @@ def normalize_date(dt):
 # ---------------- Asynchronous Fetch Functions ----------------
 
 async def fetch_page(session, url):
-    """Fetches a URL using an aiohttp session and returns the text."""
+    """Fetches a URL using aiohttp and returns the response text."""
     async with session.get(url) as response:
         return await response.text()
 
 async def novel_has_paid_update_async(session, novel_url):
     """
-    Quickly checks if the novel page has a recent premium (paid) update.
+    Quickly checks if the novel page has a recent premium (paid/locked) update.
     Loads the page, finds the first chapter element, and if it has the 'premium'
     class (and not 'free-chap') with a release date within the last 7 days, returns True.
     """
@@ -162,7 +165,7 @@ async def scrape_paid_chapters_async(session, novel_url):
             continue
         pub_dt = extract_pubdate_from_soup(chap)
         if pub_dt < now - datetime.timedelta(days=7):
-            break  # Assumes chapters are sorted descending by recency.
+            break  # Assumes chapters are sorted newest first.
         a_tag = chap.find("a")
         if not a_tag:
             continue
@@ -269,45 +272,45 @@ class CustomRSS2(PyRSS2Gen.RSS2):
 # ---------------- Main Asynchronous Function ----------------
 
 async def process_novel(session, novel_title):
-    """Process a single novel: check for recent premium update and scrape chapters."""
-    title = novel_title  # title is a string
-    novel_url = get_novel_url(title)
-    print(f"Scraping: {novel_url}")
-    if not await novel_has_paid_update_async(session, novel_url):
-        print(f"Skipping {title}: no recent premium update found.")
-        return []
-    paid_chapters, main_desc = await scrape_paid_chapters_async(session, novel_url)
-    items = []
-    if paid_chapters:
-        for chap in paid_chapters:
-            pub_date = chap["pubDate"]
-            if pub_date.tzinfo is None:
-                pub_date = pub_date.replace(tzinfo=datetime.timezone.utc)
-            # Create the RSS item using the exact pubDate.
-            item = MyRSSItem(
-                title=title,
-                link=chap["link"],
-                description=chap["description"],
-                guid=PyRSS2Gen.Guid(chap["guid"], isPermaLink=False),
-                pubDate=pub_date,
-                chaptername=chap["chaptername"],
-                nameextend=chap["nameextend"],
-                coin=chap.get("coin", "")
-            )
-            items.append(item)
-    return items
+    """Processes a single novel under the semaphore limit."""
+    async with semaphore:  # Limit concurrent processing to 50 novels.
+        title = novel_title  # title is a string
+        novel_url = get_novel_url(title)
+        print(f"Scraping: {novel_url}")
+        if not await novel_has_paid_update_async(session, novel_url):
+            print(f"Skipping {title}: no recent premium update found.")
+            return []
+        paid_chapters, main_desc = await scrape_paid_chapters_async(session, novel_url)
+        items = []
+        if paid_chapters:
+            for chap in paid_chapters:
+                pub_date = chap["pubDate"]
+                if pub_date.tzinfo is None:
+                    pub_date = pub_date.replace(tzinfo=datetime.timezone.utc)
+                # Create the RSS item using the exact pubDate.
+                item = MyRSSItem(
+                    title=title,
+                    link=chap["link"],
+                    description=chap["description"],
+                    guid=PyRSS2Gen.Guid(chap["guid"], isPermaLink=False),
+                    pubDate=pub_date,
+                    chaptername=chap["chaptername"],
+                    nameextend=chap["nameextend"],
+                    coin=chap.get("coin", "")
+                )
+                items.append(item)
+        return items
 
 async def main_async():
     rss_items = []
     async with aiohttp.ClientSession() as session:
         tasks = []
-        # Build tasks for all novels from TRANSLATOR_NOVEL_MAP
+        # Create a task for each novel.
         for translator, novel_titles in TRANSLATOR_NOVEL_MAP.items():
             for novel_title in novel_titles:
                 tasks.append(asyncio.create_task(process_novel(session, novel_title)))
-        # Wait for all tasks to complete.
+        # Wait for all novel tasks to complete.
         results = await asyncio.gather(*tasks)
-        # Each result is a list of items; extend our overall list.
         for items in results:
             rss_items.extend(items)
     
