@@ -142,7 +142,6 @@ def scrape_paid_chapters(novel_url):
             parts = chap_number.split()
             guid = parts[-1] if parts else "unknown"
         pub_dt = extract_pubdate(chap)
-        # Extract coin value from the <span class="coin"> element.
         coin_value = ""
         coin_span = chap.find("span", class_="coin")
         if coin_span:
@@ -257,7 +256,7 @@ def main():
                 )
                 rss_items.append(item)
     
-    # OPTIONAL: For items with nearly identical pubDates (within 3 hours) for the same novel, override pubDate with the maximum value.
+    # For chapters of the same novel, if the time difference is less than 3 hours, override pubDate with the maximum.
     grouped = defaultdict(list)
     for item in rss_items:
         grouped[item.title].append(item)
