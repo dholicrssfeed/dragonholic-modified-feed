@@ -2,7 +2,7 @@ name: Update Dragonholic Locked Feed
 
 on:
   schedule:
-    - cron: '*/30 * * * *'  # Run every half an hour
+    - cron: '*/5 * * * *'  # Run every half an hour
   workflow_dispatch:
 
 permissions:
