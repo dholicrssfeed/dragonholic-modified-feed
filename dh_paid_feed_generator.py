@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup
 import PyRSS2Gen
 import xml.dom.minidom
 from xml.sax.saxutils import escape
+from collections import defaultdict
 
 # Import mapping functions and data from your mappings file (dh_paid_mappings.py)
 from dh_paid_mappings import (
@@ -174,7 +175,6 @@ class MyRSSItem(PyRSS2Gen.RSSItem):
         writer.write(indent + "    <link>%s</link>" % escape(self.link) + newl)
         writer.write(indent + "    <description><![CDATA[%s]]></description>" % self.description + newl)
         
-        # New <category> element (below description)
         nsfw_list = get_nsfw_novels()
         category_value = "NSFW" if self.title in nsfw_list else "SFW"
         writer.write(indent + "    <category>%s</category>" % escape(category_value) + newl)
@@ -182,7 +182,6 @@ class MyRSSItem(PyRSS2Gen.RSSItem):
         translator = get_translator(self.title)
         writer.write(indent + "    <translator>%s</translator>" % (translator if translator else "") + newl)
         
-        # Get base Discord role ID and append extra role if NSFW
         discord_role = get_discord_role_id(translator)
         if category_value == "NSFW":
             discord_role += " <@&1304077473998442506>"
@@ -232,7 +231,7 @@ class CustomRSS2(PyRSS2Gen.RSS2):
 
 def main():
     rss_items = []
-    # Iterate over each translator and their novel titles (strings)
+    # Iterate over each translator and their novel titles
     for translator, novel_titles in TRANSLATOR_NOVEL_MAP.items():
         for novel_title in novel_titles:
             title = novel_title  # title is a string
@@ -258,7 +257,20 @@ def main():
                 )
                 rss_items.append(item)
     
-    # Remove the grouping block (we no longer override pubDate)
+    # OPTIONAL: For items with nearly identical pubDates (within 3 hours) for the same novel, override pubDate with the maximum value.
+    grouped = defaultdict(list)
+    for item in rss_items:
+        grouped[item.title].append(item)
+    for title, items in grouped.items():
+        if len(items) < 2:
+            continue
+        max_pub = max(item.pubDate for item in items)
+        min_pub = min(item.pubDate for item in items)
+        diff_hours = (max_pub - min_pub).total_seconds() / 3600.0
+        if diff_hours < 3:
+            for item in items:
+                item.pubDate = max_pub
+
     # Now sort by pubDate, then title, then chapter number (using chapter_num for reliability)
     rss_items.sort(key=lambda item: (
         item.pubDate,
