@@ -125,5 +125,3 @@ When adding a new novel or translator, please ensure you update the following:
    - If the novel is NSFW, include it in this list.
 
 Following these steps will ensure that your RSS feed generation and related mappings remain consistent and up to date.
-
-*Happy coding!*
