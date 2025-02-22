@@ -72,6 +72,7 @@ NOVEL_URL_OVERRIDES = {
 - **Function:** `get_featured_image(title)`
 - **Instructions:**  
   - Update or add a new `if` statement for the new novel so that it returns the correct image URL.
+  - Skip this step if there are is no featured image for the novel.
 
 **Example:**
 
