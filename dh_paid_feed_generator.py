@@ -66,9 +66,8 @@ def extract_pubdate(chap):
 
 def extract_chapter_number(chaptername):
     """
-    Extracts the numeric portion from a chapter string.
-    For example, "Chapter 605" returns 605.0 (as a float to handle decimals).
-    Returns 0 if no numeric value is found.
+    Attempts to extract a numeric value from a chapter string.
+    (Alternative to chapter_num below.)
     """
     match = re.search(r'\bChapter\s*([\d\.]+)', chaptername, re.IGNORECASE)
     if match:
@@ -77,6 +76,17 @@ def extract_chapter_number(chaptername):
         except Exception:
             return 0
     return 0
+
+def chapter_num(chapname):
+    """
+    Splits the chapter string and returns the second part as an integer.
+    Expects format like "Chapter 631". (Fallback if extract_chapter_number doesn't work as desired.)
+    """
+    try:
+        parts = chapname.split()
+        return int(parts[1])
+    except Exception:
+        return 0
 
 def scrape_paid_chapters(novel_url):
     """
@@ -120,8 +130,8 @@ def scrape_paid_chapters(novel_url):
             chapter_link = href.strip()
         else:
             parts = chap_number.split()
-            chapter_num = parts[-1] if parts else "unknown"
-            chapter_link = f"{novel_url}chapter-{chapter_num}/"
+            chapter_num_str = parts[-1] if parts else "unknown"
+            chapter_link = f"{novel_url}chapter-{chapter_num_str}/"
         guid = None
         for cls in chap.get("class", []):
             if cls.startswith("data-chapter-"):
@@ -172,7 +182,7 @@ class MyRSSItem(PyRSS2Gen.RSSItem):
         translator = get_translator(self.title)
         writer.write(indent + "    <translator>%s</translator>" % (translator if translator else "") + newl)
         
-        # Get Discord role ID and add an extra role if NSFW
+        # Get base Discord role ID and append extra role if NSFW
         discord_role = get_discord_role_id(translator)
         if category_value == "NSFW":
             discord_role += " <@&1304077473998442506>"
@@ -222,7 +232,7 @@ class CustomRSS2(PyRSS2Gen.RSS2):
 
 def main():
     rss_items = []
-    # Iterate over each translator and their novel titles
+    # Iterate over each translator and their novel titles (strings)
     for translator, novel_titles in TRANSLATOR_NOVEL_MAP.items():
         for novel_title in novel_titles:
             title = novel_title  # title is a string
@@ -247,10 +257,15 @@ def main():
                     coin=chap.get("coin", "")
                 )
                 rss_items.append(item)
-
-    # Use a single sort key: (pubDate, chapter number) descending
-    rss_items.sort(key=lambda item: (item.pubDate, extract_chapter_number(item.chaptername)), reverse=True)
-
+    
+    # Remove the grouping block (we no longer override pubDate)
+    # Now sort by pubDate, then title, then chapter number (using chapter_num for reliability)
+    rss_items.sort(key=lambda item: (
+        item.pubDate,
+        item.title,
+        chapter_num(item.chaptername)
+    ), reverse=True)
+    
     new_feed = CustomRSS2(
         title="Dragonholic Paid Chapters",
         link="https://dragonholic.com",
@@ -270,9 +285,9 @@ def main():
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(pretty_xml)
     
-    # Debug: print chapter numbers and pubDates
+    # Debug: print chapter numbers and pubDates for verification
     for item in rss_items:
-        print(f"{item.title} - {item.chaptername} ({extract_chapter_number(item.chaptername)}) : {item.pubDate}")
+        print(f"{item.title} - {item.chaptername} ({chapter_num(item.chaptername)}) : {item.pubDate}")
     
     print(f"Modified feed generated with {len(rss_items)} items.")
     print(f"Output written to {output_file}")
