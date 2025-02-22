@@ -324,4 +324,24 @@ def get_novel_url(title):
         text = re.sub(r'[^\w\s-]', '', text)
         return re.sub(r'[\s]+', '-', text)
     return f"https://dragonholic.com/novel/{slugify(title)}/"
-
+    
+def get_nsfw_novels():
+    """
+    Returns a list of NSFW novel titles
+    """
+    return [
+        "Bondage and Marriage",
+        "Clap",
+        "Double Junk",
+        "My Bloody Valentine",
+        "Reasonable Loss",
+        "Red Dot",
+        "The Tyrant's Happy Ending",
+        "A Forest flowing with Milk and Honey",
+        "Zion's Garden",
+        "Diary of my Ex",
+        "Osratida",
+        "The Three baby mining brothers",
+        "Little Blind Girl",
+        "The Young Marquis Regrets Too Late"
+    ]
