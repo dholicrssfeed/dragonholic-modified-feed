@@ -11,7 +11,7 @@ def split_title(full_title):
     """
     Splits the full title into three parts:
       - main_title: before the first " - "
-      - chaptername: after the first " - " (or if there's only two parts)
+      - chaptername: after the first " - " (or if there are only two parts)
       - nameextend: the third part if present (or fourth part if the third is empty)
     """
     parts = full_title.split(" - ")
@@ -29,6 +29,19 @@ def split_title(full_title):
         nameextend = ""
     return main_title, chaptername, nameextend
 
+def chapter_num(chapname):
+    """
+    Attempts to extract the chapter number from a chapter name.
+    Expects the format "Chapter {number}" (e.g. "Chapter 626").
+    If it fails, returns 0.
+    """
+    try:
+        parts = chapname.split()
+        # We assume that the second word is a number.
+        return int(parts[1])
+    except Exception:
+        return 0
+
 class MyRSSItem(PyRSS2Gen.RSSItem):
     def __init__(self, *args, chaptername="", nameextend="", **kwargs):
         self.chaptername = chaptername
@@ -39,26 +52,16 @@ class MyRSSItem(PyRSS2Gen.RSSItem):
         writer.write(indent + "  <item>" + newl)
         writer.write(indent + "    <title>%s</title>" % escape(self.title) + newl)
         writer.write(indent + "    <chaptername>%s</chaptername>" % escape(self.chaptername) + newl)
-        
-        # Conditionally wrap nameextend in *** if it is not empty.
-        if self.nameextend.strip():
-            formatted_nameextend = f"***{self.nameextend}***"
-        else:
-            formatted_nameextend = ""
+        formatted_nameextend = f"***{self.nameextend}***" if self.nameextend.strip() else ""
         writer.write(indent + "    <nameextend>%s</nameextend>" % escape(formatted_nameextend) + newl)
-        
         writer.write(indent + "    <link>%s</link>" % escape(self.link) + newl)
-        # Wrap description in CDATA to preserve HTML entities like &nbsp;
         writer.write(indent + "    <description><![CDATA[%s]]></description>" % self.description + newl)
-        # Translator remains unwrapped as per your request.
         translator = get_translator(self.title)
         writer.write(indent + "    <translator>%s</translator>" % (translator if translator else "") + newl)
-        # Wrap discord_role_id in CDATA because it might contain special characters.
         writer.write(indent + "    <discord_role_id><![CDATA[%s]]></discord_role_id>" % get_discord_role_id(translator) + newl)
         writer.write(indent + '    <featuredImage url="%s"/>' % escape(get_featured_image(self.title)) + newl)
         writer.write(indent + "    <pubDate>%s</pubDate>" % self.pubDate.strftime("%a, %d %b %Y %H:%M:%S +0000") + newl)
-        writer.write(indent + "    <guid isPermaLink=\"%s\">%s</guid>" %
-                     (str(self.guid.isPermaLink).lower(), self.guid.guid) + newl)
+        writer.write(indent + "    <guid isPermaLink=\"%s\">%s</guid>" % (str(self.guid.isPermaLink).lower(), self.guid.guid) + newl)
         writer.write(indent + "  </item>" + newl)
 
 class CustomRSS2(PyRSS2Gen.RSS2):
@@ -81,7 +84,6 @@ class CustomRSS2(PyRSS2Gen.RSS2):
             'version="2.0">' + newl
         )
         writer.write(indent + "<channel>" + newl)
-        # Manually output channel elements using the RSS2 object's attributes
         writer.write(indent + addindent + "<title>%s</title>" % escape(self.title) + newl)
         writer.write(indent + addindent + "<link>%s</link>" % escape(self.link) + newl)
         writer.write(indent + addindent + "<description>%s</description>" % escape(self.description) + newl)
@@ -96,60 +98,62 @@ class CustomRSS2(PyRSS2Gen.RSS2):
             writer.write(indent + addindent + "<generator>%s</generator>" % escape(self.generator) + newl)
         if hasattr(self, 'ttl') and self.ttl is not None:
             writer.write(indent + addindent + "<ttl>%s</ttl>" % escape(str(self.ttl)) + newl)
-        # Write each item
         for item in self.items:
             item.writexml(writer, indent + addindent, addindent, newl)
         writer.write(indent + "</channel>" + newl)
         writer.write("</rss>" + newl)
 
-# --- Retrieve and Process the Dragonholic Feed ---
-feed_url = "https://dragonholic.com/feed/manga-chapters/"
-parsed_feed = feedparser.parse(feed_url)
-
-rss_items = []
-for entry in parsed_feed.entries:
-    main_title, chaptername, nameextend = split_title(entry.title)
-    # Use main_title to determine the translator.
-    translator = get_translator(main_title)
-    if not translator:
-        # Skip items that do not match any translator mapping.
-        print("Skipping item (no translator found):", main_title)
-        continue
-    pub_date = datetime.datetime(*entry.published_parsed[:6])
-    item = MyRSSItem(
-        title=main_title,
-        link=entry.link,
-        description=entry.description,
-        guid=PyRSS2Gen.Guid(entry.id, isPermaLink=False),
-        pubDate=pub_date,
-        chaptername=chaptername,
-        nameextend=nameextend
+def main():
+    rss_items = []
+    feed_url = "https://dragonholic.com/feed/manga-chapters/"
+    parsed_feed = feedparser.parse(feed_url)
+    for entry in parsed_feed.entries:
+        main_title, chaptername, nameextend = split_title(entry.title)
+        translator = get_translator(main_title)
+        if not translator:
+            print("Skipping item (no translator found):", main_title)
+            continue
+        pub_date = datetime.datetime(*entry.published_parsed[:6])
+        item = MyRSSItem(
+            title=main_title,
+            link=entry.link,
+            description=entry.description,
+            guid=PyRSS2Gen.Guid(entry.id, isPermaLink=False),
+            pubDate=pub_date,
+            chaptername=chaptername,
+            nameextend=nameextend
+        )
+        rss_items.append(item)
+    
+    # Sort items primarily by publication date (newest first).
+    # For items with the same title, sort by the chapter number (highest first).
+    rss_items.sort(key=lambda item: (
+        item.pubDate,
+        item.title,
+        chapter_num(item.chaptername)
+    ), reverse=True)
+    
+    new_feed = CustomRSS2(
+        title=parsed_feed.feed.title,
+        link=parsed_feed.feed.link,
+        description=(parsed_feed.feed.subtitle if hasattr(parsed_feed.feed, 'subtitle') else "Modified feed"),
+        lastBuildDate=datetime.datetime.now(),
+        items=rss_items
     )
-    rss_items.append(item)
+    
+    output_file = "dh_modified_feed.xml"
+    with open(output_file, "w", encoding="utf-8") as f:
+        new_feed.writexml(f, indent="  ", addindent="  ", newl="\n")
+    
+    with open(output_file, "r", encoding="utf-8") as f:
+        xml_content = f.read()
+    dom = xml.dom.minidom.parseString(xml_content)
+    pretty_xml = "\n".join([line for line in dom.toprettyxml(indent="  ").splitlines() if line.strip()])
+    with open(output_file, "w", encoding="utf-8") as f:
+        f.write(pretty_xml)
+    
+    print("Modified feed generated with", len(rss_items), "items.")
+    print("Output written to", output_file)
 
-# --- Create the Modified RSS Feed Using Our Custom RSS Class ---
-new_feed = CustomRSS2(
-    title=parsed_feed.feed.title,
-    link=parsed_feed.feed.link,
-    description=(parsed_feed.feed.subtitle if hasattr(parsed_feed.feed, 'subtitle') else "Modified feed"),
-    lastBuildDate=datetime.datetime.now(),
-    items=rss_items
-)
-
-# --- Write the New Feed to an XML File ---
-with open("dh_modified_feed.xml", "w", encoding="utf-8") as f:
-    new_feed.writexml(f, indent="  ", addindent="  ", newl="\n")
-
-# --- (Optional) Pretty Print the XML Using minidom, filtering out extra blank lines ---
-with open("dh_modified_feed.xml", "r", encoding="utf-8") as f:
-    xml_content = f.read()
-
-dom = xml.dom.minidom.parseString(xml_content)
-# Use toprettyxml and remove empty lines
-pretty_xml = "\n".join([line for line in dom.toprettyxml(indent="  ").splitlines() if line.strip()])
-
-with open("dh_modified_feed.xml", "w", encoding="utf-8") as f:
-    f.write(pretty_xml)
-
-print("Modified feed generated with", len(rss_items), "items.")
-print("Output written to dh_modified_feed.xml")
+if __name__ == "__main__":
+    main()
