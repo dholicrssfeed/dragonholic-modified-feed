@@ -7,8 +7,8 @@ import xml.dom.minidom
 from xml.sax.saxutils import escape
 from collections import defaultdict
 
-# Import mapping functions and data from your mappings file (dh_paid_mappings.py)
-from dh_paid_mappings import (
+# Import mapping functions and data from your mappings file (dh_mappings.py)
+from dh_mappings import (
     TRANSLATOR_NOVEL_MAP,
     get_novel_url,
     get_featured_image,
