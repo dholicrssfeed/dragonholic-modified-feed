@@ -2,7 +2,7 @@ name: Update Dragonholic Locked Feed
 
 on:
   schedule:
-    - cron: '*/10 * * * *'  # Run every half an hour
+    - cron: '*/10 * * * *'  # Run every 10 minutes
   workflow_dispatch:
 
 permissions:
@@ -22,7 +22,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install requests beautifulsoup4 PyRSS2Gen
+          pip install requests beautifulsoup4 PyRSS2Gen aiohttp
 
       - name: Download Latest Mapping File
         run: |
