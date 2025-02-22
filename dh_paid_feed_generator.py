@@ -276,6 +276,9 @@ def main():
         item.title,
         chapter_num(item.chaptername)
     ), reverse=True)
+
+    for item in rss_items:
+    print(f"{item.title} - {item.chaptername} ({chapter_num(item.chaptername)}) : {item.pubDate}")
     
     new_feed = CustomRSS2(
         title="Dragonholic Paid Chapters",
