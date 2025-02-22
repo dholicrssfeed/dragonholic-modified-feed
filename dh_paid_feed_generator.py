@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 import PyRSS2Gen
 import xml.dom.minidom
 from xml.sax.saxutils import escape
-from itertools import groupby
 
 # Import mapping functions and data from your mappings file (dh_paid_mappings.py)
 from dh_paid_mappings import (
@@ -249,12 +248,8 @@ def main():
                 )
                 rss_items.append(item)
 
-    # --- Revised Sorting Logic ---
-    # First, sort by chapter number descending (to set order within same novel)
-    rss_items.sort(key=lambda item: extract_chapter_number(item.chaptername), reverse=True)
-    # Then, stable sort by pubDate and novel title descending.
-    rss_items.sort(key=lambda item: (item.pubDate, item.title), reverse=True)
-    # --- End Sorting Logic ---
+    # Use a single sort key: (pubDate, chapter number) descending
+    rss_items.sort(key=lambda item: (item.pubDate, extract_chapter_number(item.chaptername)), reverse=True)
 
     new_feed = CustomRSS2(
         title="Dragonholic Paid Chapters",
@@ -274,6 +269,10 @@ def main():
     pretty_xml = "\n".join([line for line in dom.toprettyxml(indent="  ").splitlines() if line.strip()])
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(pretty_xml)
+    
+    # Debug: print chapter numbers and pubDates
+    for item in rss_items:
+        print(f"{item.title} - {item.chaptername} ({extract_chapter_number(item.chaptername)}) : {item.pubDate}")
     
     print(f"Modified feed generated with {len(rss_items)} items.")
     print(f"Output written to {output_file}")
