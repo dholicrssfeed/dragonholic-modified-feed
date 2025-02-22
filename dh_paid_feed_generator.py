@@ -271,14 +271,16 @@ def main():
                 item.pubDate = max_pub
 
     # Now sort by pubDate, then title, then chapter number (using chapter_num for reliability)
-    rss_items.sort(key=lambda item: (
-        item.pubDate,
-        item.title,
-        chapter_num(item.chaptername)
-    ), reverse=True)
+rss_items.sort(key=lambda item: (
+    item.pubDate,
+    item.title,
+    chapter_num(item.chaptername)
+), reverse=True)
 
-    for item in rss_items:
+# Debug: print chapter numbers and pubDates for verification
+for item in rss_items:
     print(f"{item.title} - {item.chaptername} ({chapter_num(item.chaptername)}) : {item.pubDate}")
+
     
     new_feed = CustomRSS2(
         title="Dragonholic Paid Chapters",
