@@ -1,3 +1,4 @@
+import re
 import datetime
 import feedparser
 import PyRSS2Gen
@@ -29,18 +30,22 @@ def split_title(full_title):
         nameextend = ""
     return main_title, chaptername, nameextend
 
-def chapter_num(chapname):
+def chapter_num(chaptername):
     """
-    Attempts to extract the chapter number from a chapter name.
-    Expects the format "Chapter {number}" (e.g. "Chapter 626").
-    If it fails, returns 0.
+    Extracts all numeric sequences from the chaptername and returns them as a tuple.
+    Each number is converted to an int (or float if a decimal is present).
+    Any non-numeric words are ignored.
+    
+    Examples:
+      "Volume 1 Chapter 15" -> (1, 15)
+      "Volume 2 Chapter 1"  -> (2, 1)
+      "Episode 2"           -> (2,)
+      "1.1"                 -> (1.1,)
     """
-    try:
-        parts = chapname.split()
-        # We assume that the second word is a number.
-        return int(parts[1])
-    except Exception:
-        return 0
+    numbers = re.findall(r'\d+(?:\.\d+)?', chaptername)
+    if not numbers:
+        return (0,)
+    return tuple(float(n) if '.' in n else int(n) for n in numbers)
 
 class MyRSSItem(PyRSS2Gen.RSSItem):
     def __init__(self, *args, chaptername="", nameextend="", **kwargs):
