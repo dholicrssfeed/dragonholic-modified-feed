@@ -70,23 +70,24 @@ def extract_pubdate_from_soup(chap):
                         print(f"Error parsing relative date '{date_str}': {e}")
     return datetime.datetime.now(datetime.timezone.utc)
 
-def extract_chapter_number(chaptername):
-    """Attempts to extract a numeric value from a chapter string."""
-    match = re.search(r'\bChapter\s*([\d\.]+)', chaptername, re.IGNORECASE)
-    if match:
-        try:
-            return float(match.group(1))
-        except Exception:
-            return 0
-    return 0
+import re
 
-def chapter_num(chapname):
-    """Fallback: returns the second word of a chapter string as an integer."""
-    try:
-        parts = chapname.split()
-        return int(parts[1])
-    except Exception:
-        return 0
+def chapter_num(chaptername):
+    """
+    Extracts all numeric sequences from the chaptername and returns them as a tuple.
+    Each number is converted to an int (or float if a decimal is present).
+    Any non-numeric words are ignored.
+    
+    Examples:
+      "Volume 1 Chapter 15" -> (1, 15)
+      "Volume 2 Chapter 1"  -> (2, 1)
+      "Episode 2"           -> (2,)
+      "1.1"                 -> (1.1,)
+    """
+    numbers = re.findall(r'\d+(?:\.\d+)?', chaptername)
+    if not numbers:
+        return (0,)
+    return tuple(float(n) if '.' in n else int(n) for n in numbers)
 
 def normalize_date(dt):
     """Normalizes a datetime by removing microseconds."""
