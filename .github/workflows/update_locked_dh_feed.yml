@@ -31,10 +31,6 @@ jobs:
         run: |
           pip install requests beautifulsoup4 PyRSS2Gen aiohttp
 
-      - name: Download Latest Mapping File
-        run: |
-          curl -L https://raw.githubusercontent.com/dholicrssfeed/dragonholic-modified-feed/main/dh_mappings.py -o dh_paid_mappings.py
-
       - name: Run Feed Generator
         run: python dh_paid_feed_generator.py
 
