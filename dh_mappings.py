@@ -57,7 +57,7 @@ TRANSLATOR_NOVEL_MAP = {
         "Zion's Garden",
         "The Young Male Protagonist Who is Destined for Ruin Fell for Me",
         "The Final Task of the Forsaken Saint: A Command to Marry the Barbarian Count",
-        "When the Mid-Boss Villainous Noble Recalls Memories of a Past Life and Gains Game Knowledge  I Will Never Accept a Future Where I'm Called the Jealous Earl"
+        "When the Mid-Boss Villainous Noble Recalls Memories of a Past Life and Gains Game Knowledge. I Will Never Accept a Future Where I'm Called the Jealous Earl"
     ],
     "Huangluan De Bai Huangshulang": [
         "Legend Of The Frost Blade"
