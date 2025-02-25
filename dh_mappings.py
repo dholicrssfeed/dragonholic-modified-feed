@@ -232,7 +232,7 @@ def get_featured_image(title):
         return "https://dragonholic.com/wp-content/uploads/2024/10/young-protagonist-102624.jpg"
     if "The Final Task of the Forsaken Saint: A Command to Marry the Barbarian Count" in title:
         return "https://dragonholic.com/wp-content/uploads/2024/11/bAbarian.jpg"
-    if "When the Mid-Boss Villainous Noble Recalls Memories of a Past Life and Gains Game Knowledge  I Will Never Accept a Future Where I'm Called the Jealous Earl" in title:
+    if "When the Mid-Boss Villainous Noble Recalls Memories of a Past Life and Gains Game Knowledge. I Will Never Accept a Future Where I'm Called the Jealous Earl" in title:
         return "https://dragonholic.com/wp-content/uploads/2024/11/boss.jpg"
     if "Legend Of The Frost Blade" in title:
         return "https://dragonholic.com/wp-content/uploads/2024/11/Screenshot-2024-10-27-at-6.16.41 PM-1.jpg"
