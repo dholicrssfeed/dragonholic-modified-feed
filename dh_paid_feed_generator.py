@@ -111,8 +111,9 @@ async def fetch_page(session, url):
 async def novel_has_paid_update_async(session, novel_url):
     """
     Quickly checks if the novel page has a recent premium (paid/locked) update.
-    Loads the page, finds the first chapter element, and if it has the 'premium'
-    class (and not 'free-chap') with a release date within the last 7 days, returns True.
+    Instead of only checking the first chapter element, it iterates over all
+    chapters and returns True if any premium chapter (excluding free-chap)
+    has a release date within the last 7 days.
     """
     try:
         html = await fetch_page(session, novel_url)
@@ -121,13 +122,12 @@ async def novel_has_paid_update_async(session, novel_url):
         return False
 
     soup = BeautifulSoup(html, "html.parser")
-    # Use select() to pick up chapter elements regardless of nesting.
-    chapter_li = soup.select("li.wp-manga-chapter")
-    if chapter_li:
-        first_chap = chapter_li[0]
-        classes = first_chap.get("class", [])
+    chapters = soup.select("li.wp-manga-chapter")
+    now = datetime.datetime.now(datetime.timezone.utc)
+    for chap in chapters:
+        classes = chap.get("class", [])
         if "premium" in classes and "free-chap" not in classes:
-            pub_span = first_chap.find("span", class_="chapter-release-date")
+            pub_span = chap.find("span", class_="chapter-release-date")
             if pub_span:
                 i_tag = pub_span.find("i")
                 if i_tag:
@@ -136,7 +136,6 @@ async def novel_has_paid_update_async(session, novel_url):
                         pub_dt = datetime.datetime.strptime(date_str, "%B %d, %Y").replace(tzinfo=datetime.timezone.utc)
                     except Exception:
                         pub_dt = datetime.datetime.now(datetime.timezone.utc)
-                    now = datetime.datetime.now(datetime.timezone.utc)
                     if pub_dt >= now - datetime.timedelta(days=7):
                         return True
             else:
@@ -177,7 +176,8 @@ async def scrape_paid_chapters_async(session, novel_url):
             continue
         pub_dt = extract_pubdate_from_soup(chap)
         if pub_dt < now - datetime.timedelta(days=7):
-            break  # Assumes chapters are sorted newest first.
+            # Instead of breaking, we simply skip chapters older than 7 days.
+            continue
         a_tag = chap.find("a")
         if not a_tag:
             continue
@@ -219,7 +219,7 @@ async def scrape_paid_chapters_async(session, novel_url):
         paid_chapters.append({
             "chaptername": chap_number,
             "nameextend": chap_title,
-            "volume": volume,
+            "volume": volume,  # Will be empty if no volume container is found.
             "link": chapter_link,
             "description": main_desc,
             "pubDate": pub_dt,
@@ -242,6 +242,7 @@ class MyRSSItem(PyRSS2Gen.RSSItem):
     def writexml(self, writer, indent="", addindent="", newl=""):
         writer.write(indent + "  <item>" + newl)
         writer.write(indent + "    <title>%s</title>" % escape(self.title) + newl)
+        # Always output the volume element (empty if no volume)
         writer.write(indent + "    <volume>%s</volume>" % escape(self.volume) + newl)
         writer.write(indent + "    <chaptername>%s</chaptername>" % escape(self.chaptername) + newl)
         formatted_nameextend = f"***{self.nameextend}***" if self.nameextend.strip() else ""
@@ -380,4 +381,3 @@ async def main_async():
 
 if __name__ == "__main__":
     asyncio.run(main_async())
-    
