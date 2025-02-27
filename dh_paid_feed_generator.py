@@ -12,29 +12,41 @@ def get_page_source(url):
 
 def extract_volume_info(soup):
     """
-    Locate the volume container in the page source.
-    For example, the volumes are contained in a <ul class="main version-chap volumns">.
+    Extract volume information from the page source.
+    Looks for a <ul class="main version-chap volumns"> element.
+    Each volume is a <li> with classes "parent" and "has-child".
+    Within that, the volume title is in the <a class="has-child">.
+    The nested chapters are found within a nested <ul class="sub-chap list-chap">,
+    and then inside a <ul class="sub-chap-list">.
     """
-    volume_container = soup.find("ul", class_="main version-chap volumns")
     volumes = {}
+    volume_container = soup.find("ul", class_="main version-chap volumns")
     if volume_container:
-        # Find list items that are volume "parent" items
-        volume_parents = volume_container.find_all(
-            "li",
-            class_=lambda x: x and "parent" in x and "has-child" in x
-        )
+        # Find parent <li> elements that have both "parent" and "has-child" in their class list.
+        volume_parents = volume_container.find_all("li", class_=lambda x: x and "parent" in x and "has-child" in x)
+        print(f"Found {len(volume_parents)} volume parent elements.")
         for parent in volume_parents:
-            # The volume title is in the <a> tag inside the parent
+            # Get the volume title from the <a class="has-child">
             a_tag = parent.find("a", class_="has-child")
-            if a_tag:
-                vol_title = a_tag.get_text(strip=True)
-                # The chapters for this volume are inside the nested <ul> of sub-chapters.
-                chapter_list = parent.find("ul", class_="sub-chap list-chap")
-                chapters = []
-                if chapter_list:
-                    # Depending on how chapters are structured, you may loop over each <li>
-                    for li in chapter_list.find_all("li"):
-                        # You might want to extract the chapter title, link, etc.
+            if not a_tag:
+                continue
+            vol_title = a_tag.get_text(strip=True)
+            print(f"Volume title found: {vol_title}")
+            # Now, look for the nested chapter list. In your snippet, the structure is:
+            # <ul class="sub-chap list-chap" ...>
+            #   <li>
+            #       <ul class="sub-chap-list"> ... chapter items ... </ul>
+            #   </li>
+            chapter_list = parent.find("ul", class_="sub-chap list-chap")
+            chapters = []
+            if chapter_list:
+                # Look for the inner <ul class="sub-chap-list">
+                inner_ul = chapter_list.find("ul", class_="sub-chap-list")
+                if inner_ul:
+                    # Each chapter is an <li> inside inner_ul.
+                    chapter_lis = inner_ul.find_all("li", class_=lambda x: x and "wp-manga-chapter" in x)
+                    print(f"Found {len(chapter_lis)} chapters for volume '{vol_title}'.")
+                    for li in chapter_lis:
                         chapter_link = li.find("a")
                         if chapter_link:
                             chapter_title = chapter_link.get_text(strip=True)
@@ -43,18 +55,27 @@ def extract_volume_info(soup):
                                 "title": chapter_title,
                                 "url": chapter_url
                             })
-                volumes[vol_title] = chapters
+                else:
+                    print(f"No inner sub-chap-list found for volume '{vol_title}'.")
+            else:
+                print(f"No chapter list found for volume '{vol_title}'.")
+            volumes[vol_title] = chapters
+    else:
+        print("No volume container found.")
     return volumes
 
 def extract_chapters(soup):
     """
-    In case the novel does not have volumes, extract all chapters.
+    In case the novel does not have volumes,
+    extract standalone chapters from the <div class="listing-chapters_wrap">
+    that contain <li class="wp-manga-chapter"> elements.
     """
     chapters = []
-    # Example: look for all chapter <li> elements inside the chapter list container.
     chapter_container = soup.find("div", class_="listing-chapters_wrap")
     if chapter_container:
-        for li in chapter_container.find_all("li", class_="wp-manga-chapter"):
+        chapter_lis = chapter_container.find_all("li", class_=lambda x: x and "wp-manga-chapter" in x)
+        print(f"Found {len(chapter_lis)} standalone chapter items.")
+        for li in chapter_lis:
             a_tag = li.find("a")
             if a_tag:
                 chapter_title = a_tag.get_text(strip=True)
@@ -63,6 +84,8 @@ def extract_chapters(soup):
                     "title": chapter_title,
                     "url": chapter_url
                 })
+    else:
+        print("No chapter container found.")
     return chapters
 
 def generate_rss_item(novel_title, chapter, volume=None):
@@ -72,22 +95,24 @@ def generate_rss_item(novel_title, chapter, volume=None):
     volume_text = f"Volume: {volume}" if volume else ""
     pub_date = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")
     item_xml = f"""  <item>
-      <title>{novel_title}: {chapter['title']}</title>
-      <link>{chapter['url']}</link>
-      <description><![CDATA[{volume_text}]]></description>
-      <pubDate>{pub_date}</pubDate>
-      <guid isPermaLink="false">{chapter['url']}</guid>
-    </item>
+    <title>{novel_title}: {chapter['title']}</title>
+    <link>{chapter['url']}</link>
+    <description><![CDATA[{volume_text}]]></description>
+    <pubDate>{pub_date}</pubDate>
+    <guid isPermaLink="false">{chapter['url']}</guid>
+  </item>
 """
     return item_xml
 
 def build_rss_feed(novel_title, volumes, standalone_chapters):
     rss_items = ""
     if volumes:
-        # For each volume, create an item per chapter with volume info.
         for vol, chapters in volumes.items():
-            for chapter in chapters:
-                rss_items += generate_rss_item(novel_title, chapter, volume=vol)
+            if chapters:
+                for chapter in chapters:
+                    rss_items += generate_rss_item(novel_title, chapter, volume=vol)
+            else:
+                print(f"Warning: Volume '{vol}' has no chapters.")
     elif standalone_chapters:
         for chapter in standalone_chapters:
             rss_items += generate_rss_item(novel_title, chapter)
@@ -108,33 +133,33 @@ def build_rss_feed(novel_title, volumes, standalone_chapters):
 # --- Main script ---
 
 if __name__ == "__main__":
-    # Example URL for the novel "After Rebirth, I Married my Archenemy"
+    # Set the novel URL and title
     novel_url = "https://dragonholic.com/novel/after-rebirth-i-married-my-archenemy/"
     novel_title = "After Rebirth, I Married my Archenemy"
     
-    # Fetch page source
+    print(f"Fetching page source from: {novel_url}")
     html = get_page_source(novel_url)
     soup = BeautifulSoup(html, "html.parser")
     
-    # Try to extract volume info first:
+    # First, try to extract volumes.
     volumes = extract_volume_info(soup)
     
-    if volumes:
+    if volumes and any(volumes.values()):
         print("Volumes detected:")
-        for vol in volumes:
-            print("  ", vol, "with", len(volumes[vol]), "chapters")
+        for vol, chapters in volumes.items():
+            print(f"  {vol}: {len(chapters)} chapters")
     else:
-        print("No volumes detected; extracting standalone chapters")
+        print("No volumes detected; attempting to extract standalone chapters.")
         volumes = None
-    
-    # If no volumes, fall back on a general chapter extraction:
+
     standalone_chapters = extract_chapters(soup) if not volumes else None
     
     # Build the RSS feed XML
     rss_feed_xml = build_rss_feed(novel_title, volumes, standalone_chapters)
     
-    # Write to file
-    with open("dh_paid_feed.xml", "w", encoding="utf-8") as f:
+    # Write the RSS feed to file
+    output_filename = "dh_paid_feed.xml"
+    with open(output_filename, "w", encoding="utf-8") as f:
         f.write(rss_feed_xml)
     
-    print("Modified feed generated and written to dh_paid_feed.xml")
+    print(f"RSS feed generated and written to {output_filename}")
