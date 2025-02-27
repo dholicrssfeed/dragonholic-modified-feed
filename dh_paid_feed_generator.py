@@ -70,8 +70,6 @@ def extract_pubdate_from_soup(chap):
                         print(f"Error parsing relative date '{date_str}': {e}")
     return datetime.datetime.now(datetime.timezone.utc)
 
-import re
-
 def chapter_num(chaptername):
     """
     Extracts all numeric sequences from the chaptername and returns them as a tuple.
@@ -93,6 +91,16 @@ def normalize_date(dt):
     """Normalizes a datetime by removing microseconds."""
     return dt.replace(microsecond=0)
 
+def slugify(text):
+    """
+    Converts text into a URL-friendly slug.
+    This function trims the text and replaces whitespace with dashes.
+    Special characters (like ☆) are preserved.
+    """
+    text = text.strip()
+    text = re.sub(r'\s+', '-', text)
+    return text.lower()
+
 # ---------------- Asynchronous Fetch Functions ----------------
 
 async def fetch_page(session, url):
@@ -113,11 +121,13 @@ async def novel_has_paid_update_async(session, novel_url):
         return False
 
     soup = BeautifulSoup(html, "html.parser")
-    chapter_li = soup.find("li", class_="wp-manga-chapter")
+    # Use select() to pick up chapter elements regardless of nesting.
+    chapter_li = soup.select("li.wp-manga-chapter")
     if chapter_li:
-        classes = chapter_li.get("class", [])
+        first_chap = chapter_li[0]
+        classes = first_chap.get("class", [])
         if "premium" in classes and "free-chap" not in classes:
-            pub_span = chapter_li.find("span", class_="chapter-release-date")
+            pub_span = first_chap.find("span", class_="chapter-release-date")
             if pub_span:
                 i_tag = pub_span.find("i")
                 if i_tag:
@@ -156,7 +166,8 @@ async def scrape_paid_chapters_async(session, novel_url):
         main_desc = ""
         print("No main description found.")
     
-    chapters = soup.find_all("li", class_="wp-manga-chapter")
+    # Use a CSS selector to pick up all chapters, whether nested or not.
+    chapters = soup.select("li.wp-manga-chapter")
     paid_chapters = []
     now = datetime.datetime.now(datetime.timezone.utc)
     print(f"Found {len(chapters)} chapter elements on {novel_url}")
@@ -173,13 +184,28 @@ async def scrape_paid_chapters_async(session, novel_url):
         raw_title = a_tag.get_text(" ", strip=True)
         print(f"Processing chapter: {raw_title}")
         chap_number, chap_title = split_title(raw_title)
+        
+        # Try to extract volume info by checking for the closest parent volume container.
+        volume = ""
+        volume_li = chap.find_parent("li", class_=lambda x: x and "has-child" in x)
+        if volume_li:
+            volume_a = volume_li.find("a", class_="has-child")
+            if volume_a:
+                volume = volume_a.get_text(strip=True)
+        
         href = a_tag.get("href")
         if href and href.strip() != "#":
             chapter_link = href.strip()
         else:
-            parts = chap_number.split()
-            chapter_num_str = parts[-1] if parts else "unknown"
-            chapter_link = f"{novel_url}chapter-{chapter_num_str}/"
+            # If the link is a placeholder, build it.
+            if volume:
+                volume_slug = slugify(volume)
+                chapter_slug = slugify(raw_title)
+                chapter_link = f"{novel_url}{volume_slug}/{chapter_slug}/"
+            else:
+                parts = chap_number.split()
+                chapter_num_str = parts[-1] if parts else "unknown"
+                chapter_link = f"{novel_url}chapter-{chapter_num_str}/"
         guid = None
         for cls in chap.get("class", []):
             if cls.startswith("data-chapter-"):
@@ -193,6 +219,7 @@ async def scrape_paid_chapters_async(session, novel_url):
         paid_chapters.append({
             "chaptername": chap_number,
             "nameextend": chap_title,
+            "volume": volume,
             "link": chapter_link,
             "description": main_desc,
             "pubDate": pub_dt,
@@ -205,15 +232,17 @@ async def scrape_paid_chapters_async(session, novel_url):
 # ---------------- RSS Generation Classes (Synchronous) ----------------
 
 class MyRSSItem(PyRSS2Gen.RSSItem):
-    def __init__(self, *args, chaptername="", nameextend="", coin="", **kwargs):
+    def __init__(self, *args, chaptername="", nameextend="", volume="", coin="", **kwargs):
         self.chaptername = chaptername
         self.nameextend = nameextend
+        self.volume = volume
         self.coin = coin
         super().__init__(*args, **kwargs)
     
     def writexml(self, writer, indent="", addindent="", newl=""):
         writer.write(indent + "  <item>" + newl)
         writer.write(indent + "    <title>%s</title>" % escape(self.title) + newl)
+        writer.write(indent + "    <volume>%s</volume>" % escape(self.volume) + newl)
         writer.write(indent + "    <chaptername>%s</chaptername>" % escape(self.chaptername) + newl)
         formatted_nameextend = f"***{self.nameextend}***" if self.nameextend.strip() else ""
         writer.write(indent + "    <nameextend>%s</nameextend>" % escape(formatted_nameextend) + newl)
@@ -297,6 +326,7 @@ async def process_novel(session, novel_title):
                     pubDate=pub_date,
                     chaptername=chap["chaptername"],
                     nameextend=chap["nameextend"],
+                    volume=chap.get("volume", ""),
                     coin=chap.get("coin", "")
                 )
                 items.append(item)
@@ -350,3 +380,4 @@ async def main_async():
 
 if __name__ == "__main__":
     asyncio.run(main_async())
+    
