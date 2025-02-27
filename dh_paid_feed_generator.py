@@ -6,7 +6,6 @@ from bs4 import BeautifulSoup
 import PyRSS2Gen
 import xml.dom.minidom
 from xml.sax.saxutils import escape
-from collections import defaultdict
 
 # Import mapping functions and data from your mappings file (dh_mappings.py)
 from dh_mappings import (
@@ -18,13 +17,11 @@ from dh_mappings import (
     get_nsfw_novels
 )
 
-# Set up a semaphore to limit concurrency to 100 tasks.
 semaphore = asyncio.Semaphore(100)
 
-# ---------------- Helper Functions (Synchronous) ----------------
+# ---------------- Helper Functions ----------------
 
 def clean_description(raw_desc):
-    """Cleans the raw HTML description by removing extra whitespace."""
     soup = BeautifulSoup(raw_desc, "html.parser")
     for div in soup.find_all("div", class_="c-content-readmore"):
         div.decompose()
@@ -32,18 +29,9 @@ def clean_description(raw_desc):
     return re.sub(r'\s+', ' ', cleaned).strip()
 
 def split_paid_chapter_dragonholic(raw_title):
-    """
-    Processes raw paid feed titles such as:
-      "Chapter 640 <i class=\"fas fa-lock\"></i> - The Abandoned Supporting Female Role 022"
-      "Ep 20 - Some Extra Text"
-      "65" or "☆1-prologue"
-      
-    1) Removes any HTML tags.
-    2) Splits on the first occurrence of " - " to separate the chapter label from extra text.
-    Returns a tuple: (chapter_label, extra_text).
-    """
+    # Remove any HTML tags and split on the first " - "
     cleaned = re.sub(r'<[^>]+>', '', raw_title).strip()
-    parts = cleaned.split(' - ', 1)
+    parts = cleaned.split(" - ", 1)
     if len(parts) == 2:
         chapter_label = parts[0].strip()
         extra_text = parts[1].strip()
@@ -53,10 +41,6 @@ def split_paid_chapter_dragonholic(raw_title):
     return chapter_label, extra_text
 
 def extract_pubdate_from_soup(chap):
-    """
-    Extracts the publication date from a chapter element.
-    Tries an absolute date (e.g. "February 16, 2025") or a relative date.
-    """
     release_span = chap.find("span", class_="chapter-release-date")
     if release_span:
         i_tag = release_span.find("i")
@@ -85,32 +69,15 @@ def extract_pubdate_from_soup(chap):
     return datetime.datetime.now(datetime.timezone.utc)
 
 def chapter_num(chaptername):
-    """
-    Extracts all numeric sequences from the chaptername and returns them as a tuple.
-    Each number is converted to an int (or float if a decimal is present).
-    Any non-numeric words are ignored.
-    
-    Examples:
-      "Volume 1 Chapter 15" -> (1, 15)
-      "Volume 2 Chapter 1"  -> (2, 1)
-      "Episode 2"           -> (2,)
-      "1.1"                 -> (1.1,)
-    """
     numbers = re.findall(r'\d+(?:\.\d+)?', chaptername)
     if not numbers:
         return (0,)
     return tuple(float(n) if '.' in n else int(n) for n in numbers)
 
 def normalize_date(dt):
-    """Normalizes a datetime by removing microseconds."""
     return dt.replace(microsecond=0)
 
 def slugify(text):
-    """
-    Converts text into a URL-friendly slug.
-    Trims the text and replaces whitespace with dashes.
-    Special characters (like ☆) are preserved.
-    """
     text = text.strip()
     text = re.sub(r'\s+', '-', text)
     return text.lower()
@@ -118,16 +85,10 @@ def slugify(text):
 # ---------------- Asynchronous Fetch Functions ----------------
 
 async def fetch_page(session, url):
-    """Fetches a URL using aiohttp and returns the response text."""
     async with session.get(url) as response:
         return await response.text()
 
 async def novel_has_paid_update_async(session, novel_url):
-    """
-    Checks if the novel page has a recent premium (paid/locked) update.
-    Iterates over all chapter elements and returns True if any chapter
-    (premium or premium-block and not free) has a release date within the last 7 days.
-    """
     try:
         html = await fetch_page(session, novel_url)
     except Exception as e:
@@ -149,14 +110,6 @@ async def novel_has_paid_update_async(session, novel_url):
     return False
 
 async def scrape_paid_chapters_async(session, novel_url):
-    """
-    Fetches the novel page and extracts:
-      - The main description.
-      - Paid chapters (excluding free chapters) from <li class="wp-manga-chapter"> elements.
-    Skips chapters older than 7 days.
-    Extracts volume information if available.
-    Returns a tuple: (list_of_chapters, main_description)
-    """
     try:
         html = await fetch_page(session, novel_url)
     except Exception as e:
@@ -196,7 +149,7 @@ async def scrape_paid_chapters_async(session, novel_url):
         print(f"[DEBUG] {novel_url} - Processing chapter: {raw_title}")
         chapter_label, extra_text = split_paid_chapter_dragonholic(raw_title)
 
-        # Extract volume info if available by looking for the closest parent <li> with class "has-child"
+        # Attempt to extract volume info by finding the nearest parent <li> with a "has-child" class.
         volume = ""
         parent_li = chap.find_parent("li", class_=lambda x: x and "has-child" in x)
         if parent_li:
@@ -205,15 +158,14 @@ async def scrape_paid_chapters_async(session, novel_url):
                 volume = volume_a.get_text(strip=True)
                 print(f"[DEBUG] {novel_url} - Found volume: {volume}")
 
-        # Determine chapter link:
+        # Determine chapter link: if href is valid, use it; otherwise, slugify chapter_label.
         href = a_tag.get("href")
         if href and href.strip() != "#":
             chapter_link = href.strip()
         else:
-            # Use slugified chapter label directly.
             chapter_link = f"{novel_url}{slugify(chapter_label)}/"
 
-        # Determine guid from class data
+        # Determine guid from a class like "data-chapter-XXXXX"
         guid = None
         for cls in classes:
             if cls.startswith("data-chapter-"):
@@ -242,7 +194,7 @@ async def scrape_paid_chapters_async(session, novel_url):
     print(f"[DEBUG] {novel_url} - Total paid chapters processed: {len(paid_chapters)}")
     return paid_chapters, main_desc
 
-# ---------------- RSS Generation Classes (Synchronous) ----------------
+# ---------------- RSS Generation Classes ----------------
 
 class MyRSSItem(PyRSS2Gen.RSSItem):
     def __init__(self, *args, chaptername="", nameextend="", volume="", coin="", **kwargs):
@@ -289,8 +241,7 @@ class CustomRSS2(PyRSS2Gen.RSS2):
             'xmlns:slash="http://purl.org/rss/1.0/modules/slash/" '
             'xmlns:webfeeds="http://www.webfeeds.org/rss/1.0" '
             'xmlns:georss="http://www.georss.org/georss" '
-            'xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" '
-            'version="2.0">' + newl
+            'xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" version="2.0">' + newl
         )
         writer.write(indent + "<channel>" + newl)
         writer.write(indent + addindent + "<title>%s</title>" % escape(self.title) + newl)
@@ -315,7 +266,6 @@ class CustomRSS2(PyRSS2Gen.RSS2):
 # ---------------- Main Asynchronous Function ----------------
 
 async def process_novel(session, novel_title):
-    """Processes a single novel under the semaphore limit."""
     async with semaphore:
         title = novel_title
         novel_url = get_novel_url(title)
@@ -349,7 +299,6 @@ async def main_async():
     rss_items = []
     async with aiohttp.ClientSession() as session:
         tasks = []
-        # Create a task for each novel.
         for translator, novel_titles in TRANSLATOR_NOVEL_MAP.items():
             for novel_title in novel_titles:
                 tasks.append(asyncio.create_task(process_novel(session, novel_title)))
