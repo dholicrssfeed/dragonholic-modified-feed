@@ -1,428 +1,140 @@
-import re
-import datetime
-import asyncio
-import aiohttp
+#!/usr/bin/env python3
+import requests
 from bs4 import BeautifulSoup
-import PyRSS2Gen
-import xml.dom.minidom
-from xml.sax.saxutils import escape
-from urllib.parse import urlparse
+from datetime import datetime
 
-# Import mapping functions and data from your mappings file (dh_mappings.py)
-from dh_mappings import (
-    TRANSLATOR_NOVEL_MAP,
-    get_novel_url,
-    get_featured_image,
-    get_translator,
-    get_discord_role_id,
-    get_nsfw_novels
-)
+# --- Helper functions ---
 
-# Limit concurrency to 100 novels at once.
-semaphore = asyncio.Semaphore(100)
+def get_page_source(url):
+    response = requests.get(url)
+    response.raise_for_status()
+    return response.text
 
-# ---------------- Helper Functions ----------------
-
-def clean_description(raw_desc):
-    """Remove unwanted parts (like the read-more block) and extra whitespace."""
-    soup = BeautifulSoup(raw_desc, "html.parser")
-    for div in soup.find_all("div", class_="c-content-readmore"):
-        div.decompose()
-    cleaned = soup.decode_contents()
-    return re.sub(r'\s+', ' ', cleaned).strip()
-
-def split_paid_chapter_dragonholic(raw_title):
+def extract_volume_info(soup):
     """
-    Processes raw chapter titles from Dragonholic paid chapters.
-    1) Remove any <i ...>...</i> tags.
-    2) Split on " - " once to separate the chapter label from extra text.
-    Returns (chaptername, nameextend).
+    Locate the volume container in the page source.
+    For example, the volumes are contained in a <ul class="main version-chap volumns">.
     """
-    cleaned = re.sub(r'<i[^>]*>.*?</i>', '', raw_title).strip()
-    parts = cleaned.split(" - ", 1)
-    if len(parts) == 2:
-        return parts[0].strip(), parts[1].strip()
-    return cleaned, ""
-
-def extract_pubdate_from_soup(chap):
-    """Extracts a publication date from a chapter element."""
-    release_span = chap.find("span", class_="chapter-release-date")
-    if release_span:
-        i_tag = release_span.find("i")
-        if i_tag:
-            date_str = i_tag.get_text(strip=True)
-            try:
-                pub_dt = datetime.datetime.strptime(date_str, "%B %d, %Y")
-                return pub_dt.replace(tzinfo=datetime.timezone.utc)
-            except Exception:
-                # Try to handle relative date strings (e.g. "5 hours ago")
-                now = datetime.datetime.now(datetime.timezone.utc)
-                parts = date_str.lower().split()
-                try:
-                    number = int(parts[0])
-                    unit = parts[1]
-                    if "minute" in unit:
-                        return now - datetime.timedelta(minutes=number)
-                    elif "hour" in unit:
-                        return now - datetime.timedelta(hours=number)
-                    elif "day" in unit:
-                        return now - datetime.timedelta(days=number)
-                    elif "week" in unit:
-                        return now - datetime.timedelta(weeks=number)
-                except Exception as e:
-                    print(f"Error parsing relative date '{date_str}': {e}")
-    return datetime.datetime.now(datetime.timezone.utc)
-
-def chapter_num(chaptername):
-    """
-    Extracts any numbers from a chapter name.
-    Returns a tuple of numbers.
-    Example: "Chapter 37-2" -> (37, 2)
-    """
-    numbers = re.findall(r'\d+(?:\.\d+)?', chaptername)
-    if not numbers:
-        return (0,)
-    return tuple(float(n) if '.' in n else int(n) for n in numbers)
-
-def normalize_date(dt):
-    """Normalize a datetime by removing microseconds."""
-    return dt.replace(microsecond=0)
-
-def parse_volume_chapter_from_url(chapter_link):
-    """
-    Parses the chapter URL to extract volume and chapter information.
-    For example:
-      https://dragonholic.com/novel/novel-slug/1/37/        => ("1", "37")
-      https://dragonholic.com/novel/novel-slug/1/37-2/      => ("1", "37-2")
-    If there isn’t a volume segment, returns ("", last_segment with any 'chapter-' prefix removed).
-    """
-    parsed = urlparse(chapter_link)
-    segments = parsed.path.strip('/').split('/')
-    volume_str = ""
-    chapter_str = ""
-    if len(segments) >= 4:
-        volume_str = segments[-2]
-        chapter_str = segments[-1]
-    elif segments:
-        chapter_str = segments[-1]
-    if chapter_str.lower().startswith("chapter-"):
-        chapter_str = chapter_str[len("chapter-"):]
-    return volume_str, chapter_str
-
-# ---------------- Asynchronous Fetch Functions ----------------
-
-async def fetch_page(session, url):
-    """Fetches the content of a URL."""
-    async with session.get(url) as response:
-        return await response.text()
-
-async def novel_has_paid_update_async(session, novel_url):
-    """
-    Quickly checks if the novel page shows a recent premium update.
-    Returns True if the first chapter element is premium and its pubDate is within 7 days.
-    """
-    try:
-        html = await fetch_page(session, novel_url)
-    except Exception as e:
-        print(f"Error fetching {novel_url} for quick check: {e}")
-        return False
-
-    soup = BeautifulSoup(html, "html.parser")
-    chapter_li = soup.find("li", class_="wp-manga-chapter")
-    if chapter_li:
-        classes = chapter_li.get("class", [])
-        if "premium" in classes and "free-chap" not in classes:
-            pub_span = chapter_li.find("span", class_="chapter-release-date")
-            if pub_span:
-                i_tag = pub_span.find("i")
-                if i_tag:
-                    date_str = i_tag.get_text(strip=True)
-                    try:
-                        pub_dt = datetime.datetime.strptime(date_str, "%B %d, %Y").replace(tzinfo=datetime.timezone.utc)
-                    except Exception:
-                        pub_dt = datetime.datetime.now(datetime.timezone.utc)
-                    now = datetime.datetime.now(datetime.timezone.utc)
-                    if pub_dt >= now - datetime.timedelta(days=7):
-                        return True
-            else:
-                return True
-    return False
-
-async def scrape_paid_chapters_async(session, novel_url):
-    """
-    Fetches the novel page and extracts the main description and all paid chapter elements.
-    Supports both volume and non‑volume page structures.
-    Returns a tuple: (list_of_chapters, main_description).
-    """
-    try:
-        html = await fetch_page(session, novel_url)
-    except Exception as e:
-        print(f"Error fetching {novel_url}: {e}")
-        return [], ""
-    
-    soup = BeautifulSoup(html, "html.parser")
-    desc_div = soup.find("div", class_="description-summary")
-    if desc_div:
-        main_desc = clean_description(desc_div.decode_contents())
-        print("Main description fetched.")
-    else:
-        main_desc = ""
-        print("No main description found on", novel_url)
-    
-    paid_chapters = []
-    now = datetime.datetime.now(datetime.timezone.utc)
-    
-    # Check if the page uses volume listings:
-    volume_container = soup.find("ul", class_=lambda x: x and "version-chap" in x and "volumns" in x)
+    volume_container = soup.find("ul", class_="main version-chap volumns")
+    volumes = {}
     if volume_container:
-        # Process each volume
-        volume_parents = volume_container.find_all("li", class_="parent has-child")
-        for vol in volume_parents:
-            vol_a = vol.find("a", class_="has-child")
-            volume_text = vol_a.get_text(strip=True) if vol_a else ""
-            vol_match = re.search(r"Volume\s*(\d+)", volume_text, re.IGNORECASE)
-            volume_val = vol_match.group(1) if vol_match else ""
-            # Look for the nested chapter list.
-            subchap_ul = vol.find("ul", class_=lambda x: x and "sub-chap" in x)
-            if subchap_ul:
-                chapter_lis = subchap_ul.find_all("li", class_="wp-manga-chapter")
-                for chap in chapter_lis:
-                    if "free-chap" in chap.get("class", []):
-                        continue
-                    pub_dt = extract_pubdate_from_soup(chap)
-                    if pub_dt < now - datetime.timedelta(days=7):
-                        continue  # Skip older chapters.
-                    a_tag = chap.find("a")
-                    if not a_tag:
-                        continue
-                    raw_title = a_tag.get_text(" ", strip=True)
-                    chapter_name, name_extend = split_paid_chapter_dragonholic(raw_title)
-                    href = a_tag.get("href")
-                    if href and href.strip() != "#":
-                        chapter_link = href.strip()
-                    else:
-                        parts = chapter_name.split()
-                        chapter_num_str = parts[-1] if parts else "unknown"
-                        chapter_link = f"{novel_url}{chapter_num_str}/"
-                    # Parse volume and chapter from URL (if available)
-                    vol_from_url, chap_from_url = parse_volume_chapter_from_url(chapter_link)
-                    if vol_from_url:
-                        # Use the chapter part from URL
-                        chapter_name = chap_from_url
-                    # Get guid from class "data-chapter-XXXX"
-                    guid = None
-                    for cls in chap.get("class", []):
-                        if cls.startswith("data-chapter-"):
-                            guid = cls.replace("data-chapter-", "")
-                            break
-                    if not guid:
-                        parts = chapter_name.split()
-                        guid = parts[-1] if parts else "unknown"
-                    coin_span = chap.find("span", class_="coin")
-                    coin_value = coin_span.get_text(strip=True) if coin_span else ""
-                    paid_chapters.append({
-                        "chaptername": chapter_name,
-                        "nameextend": name_extend,
-                        "link": chapter_link,
-                        "description": main_desc,
-                        "pubDate": pub_dt,
-                        "guid": guid,
-                        "coin": coin_value,
-                        "volume": volume_val
-                    })
-    else:
-        # No volume structure; process all chapter elements directly.
-        chapters = soup.find_all("li", class_="wp-manga-chapter")
-        for chap in chapters:
-            if "free-chap" in chap.get("class", []):
-                continue
-            pub_dt = extract_pubdate_from_soup(chap)
-            if pub_dt < now - datetime.timedelta(days=7):
-                break
-            a_tag = chap.find("a")
-            if not a_tag:
-                continue
-            raw_title = a_tag.get_text(" ", strip=True)
-            chapter_name, name_extend = split_paid_chapter_dragonholic(raw_title)
-            href = a_tag.get("href")
-            if href and href.strip() != "#":
-                chapter_link = href.strip()
-            else:
-                parts = chapter_name.split()
-                chapter_num_str = parts[-1] if parts else "unknown"
-                chapter_link = f"{novel_url}{chapter_num_str}/"
-            vol, chap_from_url = parse_volume_chapter_from_url(chapter_link)
-            if vol:
-                chapter_name = chap_from_url
-            guid = None
-            for cls in chap.get("class", []):
-                if cls.startswith("data-chapter-"):
-                    guid = cls.replace("data-chapter-", "")
-                    break
-            if not guid:
-                parts = chapter_name.split()
-                guid = parts[-1] if parts else "unknown"
-            coin_span = chap.find("span", class_="coin")
-            coin_value = coin_span.get_text(strip=True) if coin_span else ""
-            paid_chapters.append({
-                "chaptername": chapter_name,
-                "nameextend": name_extend,
-                "link": chapter_link,
-                "description": main_desc,
-                "pubDate": pub_dt,
-                "guid": guid,
-                "coin": coin_value,
-                "volume": ""  # No volume found.
-            })
-    print(f"Total paid chapters processed from {novel_url}: {len(paid_chapters)}")
-    return paid_chapters, main_desc
-
-# ---------------- RSS Generation Classes ----------------
-
-class MyRSSItem(PyRSS2Gen.RSSItem):
-    def __init__(self, *args, chaptername="", nameextend="", coin="", volume="", **kwargs):
-        self.chaptername = chaptername
-        self.nameextend = nameextend
-        self.coin = coin
-        self.volume = volume
-        super().__init__(*args, **kwargs)
-    
-    def writexml(self, writer, indent="", addindent="", newl=""):
-        writer.write(indent + "  <item>" + newl)
-        writer.write(indent + "    <title>%s</title>" % escape(self.title) + newl)
-        writer.write(indent + "    <chaptername>%s</chaptername>" % escape(self.chaptername) + newl)
-        formatted_extend = f"***{self.nameextend}***" if self.nameextend.strip() else ""
-        writer.write(indent + "    <nameextend>%s</nameextend>" % escape(formatted_extend) + newl)
-        writer.write(indent + "    <link>%s</link>" % escape(self.link) + newl)
-        writer.write(indent + "    <description><![CDATA[%s]]></description>" % self.description + newl)
-        nsfw_list = get_nsfw_novels()
-        category_value = "NSFW" if self.title in nsfw_list else "SFW"
-        writer.write(indent + "    <category>%s</category>" % escape(category_value) + newl)
-        translator = get_translator(self.title)
-        writer.write(indent + "    <translator>%s</translator>" % (translator if translator else "") + newl)
-        discord_role = get_discord_role_id(translator)
-        if category_value == "NSFW":
-            discord_role += " <@&1304077473998442506>"
-        writer.write(indent + "    <discord_role_id><![CDATA[%s]]></discord_role_id>" % discord_role + newl)
-        writer.write(indent + '    <featuredImage url="%s"/>' % escape(get_featured_image(self.title)) + newl)
-        if self.coin:
-            writer.write(indent + "    <coin>%s</coin>" % escape(self.coin) + newl)
-        # Always output the <volume> tag (even if empty)
-        writer.write(indent + "    <volume>%s</volume>" % escape(self.volume) + newl)
-        writer.write(indent + "    <pubDate>%s</pubDate>" % self.pubDate.strftime("%a, %d %b %Y %H:%M:%S +0000") + newl)
-        writer.write(indent + "    <guid isPermaLink=\"%s\">%s</guid>" % (str(self.guid.isPermaLink).lower(), self.guid.guid) + newl)
-        writer.write(indent + "  </item>" + newl)
-
-class CustomRSS2(PyRSS2Gen.RSS2):
-    def writexml(self, writer, indent="", addindent="", newl=""):
-        writer.write('<?xml version="1.0" encoding="utf-8"?>' + newl)
-        writer.write(
-            '<rss xmlns:content="http://purl.org/rss/1.0/modules/content/" '
-            'xmlns:wfw="http://wellformedweb.org/CommentAPI/" '
-            'xmlns:dc="http://purl.org/dc/elements/1.1/" '
-            'xmlns:atom="http://www.w3.org/2005/Atom" '
-            'xmlns:sy="http://purl.org/rss/1.0/modules/syndication/" '
-            'xmlns:slash="http://purl.org/rss/1.0/modules/slash/" '
-            'xmlns:webfeeds="http://www.webfeeds.org/rss/1.0" '
-            'xmlns:georss="http://www.georss.org/georss" '
-            'xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#" '
-            'version="2.0">' + newl
+        # Find list items that are volume "parent" items
+        volume_parents = volume_container.find_all(
+            "li",
+            class_=lambda x: x and "parent" in x and "has-child" in x
         )
-        writer.write(indent + "<channel>" + newl)
-        writer.write(indent + addindent + "<title>%s</title>" % escape(self.title) + newl)
-        writer.write(indent + addindent + "<link>%s</link>" % escape(self.link) + newl)
-        writer.write(indent + addindent + "<description>%s</description>" % escape(self.description) + newl)
-        if hasattr(self, 'language') and self.language:
-            writer.write(indent + addindent + "<language>%s</language>" % escape(self.language) + newl)
-        if hasattr(self, 'lastBuildDate') and self.lastBuildDate:
-            writer.write(indent + addindent + "<lastBuildDate>%s</lastBuildDate>" %
-                         self.lastBuildDate.strftime("%a, %d %b %Y %H:%M:%S +0000") + newl)
-        if hasattr(self, 'docs') and self.docs:
-            writer.write(indent + addindent + "<docs>%s</docs>" % escape(self.docs) + newl)
-        if hasattr(self, 'generator') and self.generator:
-            writer.write(indent + addindent + "<generator>%s</generator>" % escape(self.generator) + newl)
-        if hasattr(self, 'ttl') and self.ttl is not None:
-            writer.write(indent + addindent + "<ttl>%s</ttl>" % escape(str(self.ttl)) + newl)
-        for item in self.items:
-            item.writexml(writer, indent + addindent, addindent, newl)
-        writer.write(indent + "</channel>" + newl)
-        writer.write("</rss>" + newl)
+        for parent in volume_parents:
+            # The volume title is in the <a> tag inside the parent
+            a_tag = parent.find("a", class_="has-child")
+            if a_tag:
+                vol_title = a_tag.get_text(strip=True)
+                # The chapters for this volume are inside the nested <ul> of sub-chapters.
+                chapter_list = parent.find("ul", class_="sub-chap list-chap")
+                chapters = []
+                if chapter_list:
+                    # Depending on how chapters are structured, you may loop over each <li>
+                    for li in chapter_list.find_all("li"):
+                        # You might want to extract the chapter title, link, etc.
+                        chapter_link = li.find("a")
+                        if chapter_link:
+                            chapter_title = chapter_link.get_text(strip=True)
+                            chapter_url = chapter_link.get("href")
+                            chapters.append({
+                                "title": chapter_title,
+                                "url": chapter_url
+                            })
+                volumes[vol_title] = chapters
+    return volumes
 
-# ---------------- Main Processing Functions ----------------
+def extract_chapters(soup):
+    """
+    In case the novel does not have volumes, extract all chapters.
+    """
+    chapters = []
+    # Example: look for all chapter <li> elements inside the chapter list container.
+    chapter_container = soup.find("div", class_="listing-chapters_wrap")
+    if chapter_container:
+        for li in chapter_container.find_all("li", class_="wp-manga-chapter"):
+            a_tag = li.find("a")
+            if a_tag:
+                chapter_title = a_tag.get_text(strip=True)
+                chapter_url = a_tag.get("href")
+                chapters.append({
+                    "title": chapter_title,
+                    "url": chapter_url
+                })
+    return chapters
 
-async def process_novel(session, novel_title):
-    """Processes a single novel: fetches its page, extracts paid chapters, and returns RSS items."""
-    async with semaphore:
-        title = novel_title
-        novel_url = get_novel_url(title)
-        print(f"Scraping: {novel_url} for novel '{title}'")
-        if not await novel_has_paid_update_async(session, novel_url):
-            print(f"Skipping {title}: no recent premium update found.")
-            return []
-        paid_chapters, main_desc = await scrape_paid_chapters_async(session, novel_url)
-        if title.lower() == "after rebirth, i married my archenemy":
-            print(f"DEBUG: Processing '{title}' with {len(paid_chapters)} chapters found.")
-        items = []
-        for chap in paid_chapters:
-            pub_date = chap["pubDate"]
-            if pub_date.tzinfo is None:
-                pub_date = pub_date.replace(tzinfo=datetime.timezone.utc)
-            rss_item = MyRSSItem(
-                title=title,
-                link=chap["link"],
-                description=chap["description"],
-                guid=PyRSS2Gen.Guid(chap["guid"], isPermaLink=False),
-                pubDate=pub_date,
-                chaptername=chap["chaptername"],
-                nameextend=chap["nameextend"],
-                coin=chap.get("coin", ""),
-                volume=chap.get("volume", "")
-            )
-            items.append(rss_item)
-        return items
+def generate_rss_item(novel_title, chapter, volume=None):
+    """
+    Create an RSS item XML string.
+    """
+    volume_text = f"Volume: {volume}" if volume else ""
+    pub_date = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S +0000")
+    item_xml = f"""  <item>
+      <title>{novel_title}: {chapter['title']}</title>
+      <link>{chapter['url']}</link>
+      <description><![CDATA[{volume_text}]]></description>
+      <pubDate>{pub_date}</pubDate>
+      <guid isPermaLink="false">{chapter['url']}</guid>
+    </item>
+"""
+    return item_xml
 
-async def main_async():
-    rss_items = []
-    async with aiohttp.ClientSession() as session:
-        tasks = []
-        for translator, novel_titles in TRANSLATOR_NOVEL_MAP.items():
-            for novel_title in novel_titles:
-                tasks.append(asyncio.create_task(process_novel(session, novel_title)))
-        results = await asyncio.gather(*tasks)
-        for item_list in results:
-            rss_items.extend(item_list)
-    
-    rss_items.sort(key=lambda item: (normalize_date(item.pubDate), chapter_num(item.chaptername)), reverse=True)
-    
-    # Debug: print parsed info.
-    for item in rss_items:
-        print(f"{item.title} - Volume: '{item.volume}' Chapter: {item.chaptername} {chapter_num(item.chaptername)} : {item.pubDate}")
-    
-    new_feed = CustomRSS2(
-        title="Dragonholic Paid Chapters",
-        link="https://dragonholic.com",
-        description="Aggregated RSS feed for paid chapters across mapped novels.",
-        lastBuildDate=datetime.datetime.now(datetime.timezone.utc),
-        items=rss_items
-    )
-    
-    output_file = "dh_paid_feed.xml"
-    with open(output_file, "w", encoding="utf-8") as f:
-        new_feed.writexml(f, indent="  ", addindent="  ", newl="\n")
-    
-    # Prettify the XML output.
-    with open(output_file, "r", encoding="utf-8") as f:
-        xml_content = f.read()
-    dom = xml.dom.minidom.parseString(xml_content)
-    pretty_xml = "\n".join([line for line in dom.toprettyxml(indent="  ").splitlines() if line.strip()])
-    with open(output_file, "w", encoding="utf-8") as f:
-        f.write(pretty_xml)
-    
-    for item in rss_items:
-        print(f"{item.title} - Volume: '{item.volume}' Chapter: {item.chaptername} {chapter_num(item.chaptername)} : {item.pubDate}")
-    
-    print(f"Modified feed generated with {len(rss_items)} items.")
-    print(f"Output written to {output_file}")
+def build_rss_feed(novel_title, volumes, standalone_chapters):
+    rss_items = ""
+    if volumes:
+        # For each volume, create an item per chapter with volume info.
+        for vol, chapters in volumes.items():
+            for chapter in chapters:
+                rss_items += generate_rss_item(novel_title, chapter, volume=vol)
+    elif standalone_chapters:
+        for chapter in standalone_chapters:
+            rss_items += generate_rss_item(novel_title, chapter)
+    else:
+        print("No chapters found!")
+    rss_feed = f"""<?xml version="1.0" encoding="UTF-8" ?>
+<rss version="2.0">
+  <channel>
+    <title>{novel_title} - Dragonholic RSS Feed</title>
+    <link>https://dragonholic.com/</link>
+    <description>RSS feed for {novel_title}</description>
+{rss_items}
+  </channel>
+</rss>
+"""
+    return rss_feed
+
+# --- Main script ---
 
 if __name__ == "__main__":
-    asyncio.run(main_async())
+    # Example URL for the novel "After Rebirth, I Married my Archenemy"
+    novel_url = "https://dragonholic.com/novel/after-rebirth-i-married-my-archenemy/"
+    novel_title = "After Rebirth, I Married my Archenemy"
+    
+    # Fetch page source
+    html = get_page_source(novel_url)
+    soup = BeautifulSoup(html, "html.parser")
+    
+    # Try to extract volume info first:
+    volumes = extract_volume_info(soup)
+    
+    if volumes:
+        print("Volumes detected:")
+        for vol in volumes:
+            print("  ", vol, "with", len(volumes[vol]), "chapters")
+    else:
+        print("No volumes detected; extracting standalone chapters")
+        volumes = None
+    
+    # If no volumes, fall back on a general chapter extraction:
+    standalone_chapters = extract_chapters(soup) if not volumes else None
+    
+    # Build the RSS feed XML
+    rss_feed_xml = build_rss_feed(novel_title, volumes, standalone_chapters)
+    
+    # Write to file
+    with open("dh_paid_feed.xml", "w", encoding="utf-8") as f:
+        f.write(rss_feed_xml)
+    
+    print("Modified feed generated and written to dh_paid_feed.xml")
