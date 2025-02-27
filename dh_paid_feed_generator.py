@@ -9,8 +9,7 @@ from xml.sax.saxutils import escape
 from collections import defaultdict
 from urllib.parse import urlparse
 
-# ---------------- Mappings & Data (from your dh_mappings.py) ----------------
-# Replace these with your actual imports.
+# Import mapping functions and data from your mappings file (dh_mappings.py)
 from dh_mappings import (
     TRANSLATOR_NOVEL_MAP,
     get_novel_url,
@@ -20,80 +19,30 @@ from dh_mappings import (
     get_nsfw_novels
 )
 
-# ---------------- Concurrency Setup ----------------
+# Set up a semaphore to limit concurrency to 100 tasks.
 semaphore = asyncio.Semaphore(100)
 
 # ---------------- Helper Functions (Synchronous) ----------------
 
-def split_paid_chapter_dragonholic(raw_title):
-    """
-    Handles raw paid feed titles like:
-      "Chapter 640 <i class=\"fas fa-lock\"></i> - The Abandoned Supporting Female Role 027"
-    Steps:
-      1) Remove any <i ...>...</i> tags.
-      2) Split on " - " once to separate the primary text from any trailing extended title.
-    Returns (chaptername, nameextend).
-    """
-    cleaned = re.sub(r'<i[^>]*>.*?</i>', '', raw_title).strip()
-    parts = cleaned.split(' - ', 1)
-    if len(parts) == 2:
-        chaptername = parts[0].strip()
-        nameextend = parts[1].strip()
-    else:
-        chaptername = cleaned
-        nameextend = ""
-    return chaptername, nameextend
-
-def parse_volume_chapter_from_url(chapter_link):
-    """
-    Given a chapter URL, tries to parse out the volume and chapter number.
-    For example, for:
-      https://dragonholic.com/novel/the-goddess-granted-me-the-hatching-skill-and-somehow-i-became-the-strongest-tamer-commanding-mythical-and-divine-beasts/1/37/
-    it returns ("1", "37").  
-    If the URL has only three segments (i.e. no volume) then volume is returned as an empty string.
-    If the chapter portion contains a dash (e.g. "37-2"), it converts it to "37.2".
-    """
-    parsed = urlparse(chapter_link)
-    segments = parsed.path.strip('/').split('/')
-    volume_str = ""
-    chapter_str = ""
-    if len(segments) >= 4:
-        # Expected format: "novel", "slug", "volume", "chapter"
-        possible_volume = segments[-2]
-        possible_chapter = segments[-1]
-        try:
-            # If this segment is numeric, treat it as volume.
-            float(possible_volume)
-            volume_str = possible_volume
-        except ValueError:
-            volume_str = ""
-        # If the chapter string has a single dash (e.g. "37-2"), convert it to a decimal.
-        if '-' in possible_chapter and possible_chapter.count('-') == 1:
-            maybe_float = possible_chapter.replace('-', '.')
-            try:
-                float(maybe_float)
-                possible_chapter = maybe_float
-            except ValueError:
-                pass
-        chapter_str = possible_chapter
-    elif len(segments) >= 3:
-        # No volume segment present.
-        chapter_str = segments[-1]
-        # Optionally, you could try to extract a number from chapter_str.
-    return volume_str, chapter_str
-
 def clean_description(raw_desc):
-    """Cleans the raw HTML description by removing extra whitespace and unwanted readmore divs."""
+    """Cleans the raw HTML description by removing extra whitespace and unwanted elements."""
     soup = BeautifulSoup(raw_desc, "html.parser")
     for div in soup.find_all("div", class_="c-content-readmore"):
         div.decompose()
     cleaned = soup.decode_contents()
     return re.sub(r'\s+', ' ', cleaned).strip()
 
+def split_title(full_title):
+    """Splits a chapter title into chapter number and extra text."""
+    parts = full_title.split(" - ", 1)
+    if len(parts) == 2:
+        return parts[0].strip(), parts[1].strip()
+    return full_title.strip(), ""
+
 def extract_pubdate_from_soup(chap):
     """
     Extracts the publication date from a chapter element.
-    Tries to parse an absolute date (e.g. "February 16, 2025") or a relative date.
+    Tries an absolute date (e.g. "February 16, 2025") or a relative date.
     """
     release_span = chap.find("span", class_="chapter-release-date")
     if release_span:
@@ -124,26 +73,56 @@ def extract_pubdate_from_soup(chap):
 
 def chapter_num(chaptername):
     """
-    Extracts numeric sequences from chaptername for sorting purposes.
-    For example:
-      "Chapter 65" -> (65,)
-      "37.2"       -> (37.2,)
-    If no number is found, returns (0,).
+    Extracts all numeric sequences from the chaptername and returns them as a tuple.
+    Each number is converted to an int (or float if a decimal is present).
     """
     numbers = re.findall(r'\d+(?:\.\d+)?', chaptername)
     if not numbers:
         return (0,)
-    result = []
-    for n in numbers:
-        if '.' in n:
-            result.append(float(n))
-        else:
-            result.append(int(n))
-    return tuple(result)
+    return tuple(float(n) if '.' in n else int(n) for n in numbers)
 
 def normalize_date(dt):
-    """Normalizes a datetime object by zeroing microseconds."""
+    """Normalizes a datetime by removing microseconds."""
     return dt.replace(microsecond=0)
+
+def parse_volume_chapter_from_url(chapter_link):
+    """
+    Parses the volume and chapter number from a chapter URL.
+    For URLs with volumes, e.g.
+      https://dragonholic.com/novel/novel-slug/1/37/ or 
+      https://dragonholic.com/novel/novel-slug/1/37-2
+    it returns (volume, chapter). If the URL does not include a volume segment,
+    it returns ("", chapter) where chapter is derived from the last segment
+    (with any "chapter-" prefix removed).
+    """
+    parsed = urlparse(chapter_link)
+    segments = parsed.path.strip('/').split('/')
+    volume_str = ""
+    chapter_str = ""
+    if len(segments) >= 4:
+        # e.g. /novel/slug/1/37 or /novel/slug/1/37-2
+        volume_str = segments[-2]
+        chapter_str = segments[-1]
+    elif len(segments) >= 1:
+        chapter_str = segments[-1]
+    # Remove any "chapter-" prefix (case-insensitive)
+    if chapter_str.lower().startswith("chapter-"):
+        chapter_str = chapter_str[len("chapter-"):]
+    return volume_str, chapter_str
+
+def split_paid_chapter_dragonholic(raw_title):
+    """
+    Handles raw paid feed titles like:
+      "Chapter 640 <i class=\"fas fa-lock\"></i> - The Abandoned Supporting Female Role 027"
+    1) Remove any <i ...>...</i> tags.
+    2) Split once on " - " to separate the chapter number from the extra text.
+    Returns (chaptername, nameextend).
+    """
+    cleaned = re.sub(r'<i[^>]*>.*?</i>', '', raw_title).strip()
+    parts = cleaned.split(" - ", 1)
+    if len(parts) == 2:
+        return parts[0].strip(), parts[1].strip()
+    return cleaned, ""
 
 # ---------------- Asynchronous Fetch Functions ----------------
 
@@ -191,7 +170,7 @@ async def scrape_paid_chapters_async(session, novel_url):
       - The main description.
       - Paid chapters (excluding free chapters) from <li class="wp-manga-chapter"> elements.
     Stops processing once a chapter older than 7 days is encountered.
-    Returns a tuple: (list_of_chapters, main_description).
+    Returns a tuple: (list_of_chapters, main_description)
     """
     try:
         html = await fetch_page(session, novel_url)
@@ -206,60 +185,60 @@ async def scrape_paid_chapters_async(session, novel_url):
         print("Main description fetched.")
     else:
         main_desc = ""
-        print("No main description found.")
+        print("No main description found on", novel_url)
     
     chapters = soup.find_all("li", class_="wp-manga-chapter")
     paid_chapters = []
     now = datetime.datetime.now(datetime.timezone.utc)
     print(f"Found {len(chapters)} chapter elements on {novel_url}")
-
     for chap in chapters:
         if "free-chap" in chap.get("class", []):
             continue
-
         pub_dt = extract_pubdate_from_soup(chap)
         if pub_dt < now - datetime.timedelta(days=7):
-            break  # Assumes chapters are ordered newest first
-
+            break  # Chapters assumed to be sorted newest first.
         a_tag = chap.find("a")
         if not a_tag:
             continue
-
         raw_title = a_tag.get_text(" ", strip=True)
-        print(f"Processing chapter: {raw_title}")
-        cleaned_chapname, nameextend = split_paid_chapter_dragonholic(raw_title)
+        chap_number, chap_title = split_paid_chapter_dragonholic(raw_title)
         href = a_tag.get("href")
-        chapter_link = href.strip() if href and href.strip() != "#" else novel_url
+        if href and href.strip() != "#":
+            chapter_link = href.strip()
+        else:
+            # Fallback: use chapter number from the title
+            parts = chap_number.split()
+            chapter_num_str = parts[-1] if parts else "unknown"
+            chapter_link = f"{novel_url}{chapter_num_str}/"
+        # Parse volume and chapter from the link
+        volume_str, chapter_extracted = parse_volume_chapter_from_url(chapter_link)
+        if volume_str:
+            # If volume exists, use the extracted chapter value
+            chap_number = chapter_extracted
 
-        # Parse volume and chapter from the chapter link.
-        volume_val, chapter_val = parse_volume_chapter_from_url(chapter_link)
-        # If no chapter value was extracted, fall back to cleaned_chapname.
-        if not chapter_val:
-            chapter_val = cleaned_chapname
-
-        # Extract a GUID from class names (if available)
+        # Debug: print the parsed volume and chapter info.
+        print(f"Parsed chapter link: {chapter_link} -> volume: '{volume_str}', chapter: '{chap_number}'")
+        
         guid = None
         for cls in chap.get("class", []):
             if cls.startswith("data-chapter-"):
                 guid = cls.replace("data-chapter-", "")
                 break
         if not guid:
-            guid = f"{volume_val}-{chapter_val}" if volume_val or chapter_val else "unknown"
-
+            parts = chap_number.split()
+            guid = parts[-1] if parts else "unknown"
         coin_span = chap.find("span", class_="coin")
         coin_value = coin_span.get_text(strip=True) if coin_span else ""
-
         paid_chapters.append({
-            "volume": volume_val,
-            "chaptername": chapter_val,
-            "nameextend": nameextend,
+            "chaptername": chap_number,
+            "nameextend": chap_title,
             "link": chapter_link,
             "description": main_desc,
             "pubDate": pub_dt,
             "guid": guid,
-            "coin": coin_value
+            "coin": coin_value,
+            "volume": volume_str  # Will be "" if no volume info.
         })
-
     print(f"Total paid chapters processed from {novel_url}: {len(paid_chapters)}")
     return paid_chapters, main_desc
 
@@ -270,34 +249,32 @@ class MyRSSItem(PyRSS2Gen.RSSItem):
         self.chaptername = chaptername
         self.nameextend = nameextend
         self.coin = coin
-        self.volume = volume
+        self.volume = volume  # New field for volume.
         super().__init__(*args, **kwargs)
     
     def writexml(self, writer, indent="", addindent="", newl=""):
         writer.write(indent + "  <item>" + newl)
-        writer.write(indent + f"    <title>{escape(self.title)}</title>{newl}")
-        writer.write(indent + f"    <volume>{escape(self.volume)}</volume>{newl}")
-        writer.write(indent + f"    <chaptername>{escape(self.chaptername)}</chaptername>{newl}")
-        formatted_nameextend = self.nameextend.strip()
-        if formatted_nameextend:
-            formatted_nameextend = f"***{formatted_nameextend}***"
-        writer.write(indent + f"    <nameextend>{escape(formatted_nameextend)}</nameextend>{newl}")
-        writer.write(indent + f"    <link>{escape(self.link)}</link>{newl}")
-        writer.write(indent + f"    <description><![CDATA[{self.description}]]></description>{newl}")
+        writer.write(indent + "    <title>%s</title>" % escape(self.title) + newl)
+        writer.write(indent + "    <chaptername>%s</chaptername>" % escape(self.chaptername) + newl)
+        writer.write(indent + "    <nameextend>%s</nameextend>" % escape(f"***{self.nameextend}***" if self.nameextend.strip() else "") + newl)
+        writer.write(indent + "    <link>%s</link>" % escape(self.link) + newl)
+        writer.write(indent + "    <description><![CDATA[%s]]></description>" % self.description + newl)
         nsfw_list = get_nsfw_novels()
         category_value = "NSFW" if self.title in nsfw_list else "SFW"
-        writer.write(indent + f"    <category>{escape(category_value)}</category>{newl}")
+        writer.write(indent + "    <category>%s</category>" % escape(category_value) + newl)
         translator = get_translator(self.title)
-        writer.write(indent + f"    <translator>{translator if translator else ''}</translator>{newl}")
+        writer.write(indent + "    <translator>%s</translator>" % (translator if translator else "") + newl)
         discord_role = get_discord_role_id(translator)
         if category_value == "NSFW":
             discord_role += " <@&1304077473998442506>"
-        writer.write(indent + f"    <discord_role_id><![CDATA[{discord_role}]]></discord_role_id>{newl}")
-        writer.write(indent + f'    <featuredImage url="{escape(get_featured_image(self.title))}"/>{newl}')
+        writer.write(indent + "    <discord_role_id><![CDATA[%s]]></discord_role_id>" % discord_role + newl)
+        writer.write(indent + '    <featuredImage url="%s"/>' % escape(get_featured_image(self.title)) + newl)
         if self.coin:
-            writer.write(indent + f"    <coin>{escape(self.coin)}</coin>{newl}")
-        writer.write(indent + f"    <pubDate>{self.pubDate.strftime('%a, %d %b %Y %H:%M:%S +0000')}</pubDate>{newl}")
-        writer.write(indent + f'    <guid isPermaLink="{str(self.guid.isPermaLink).lower()}">{self.guid.guid}</guid>{newl}')
+            writer.write(indent + "    <coin>%s</coin>" % escape(self.coin) + newl)
+        # Always write a <volume> field (even if empty)
+        writer.write(indent + "    <volume>%s</volume>" % escape(self.volume) + newl)
+        writer.write(indent + "    <pubDate>%s</pubDate>" % self.pubDate.strftime("%a, %d %b %Y %H:%M:%S +0000") + newl)
+        writer.write(indent + "    <guid isPermaLink=\"%s\">%s</guid>" % (str(self.guid.isPermaLink).lower(), self.guid.guid) + newl)
         writer.write(indent + "  </item>" + newl)
 
 class CustomRSS2(PyRSS2Gen.RSS2):
@@ -316,43 +293,39 @@ class CustomRSS2(PyRSS2Gen.RSS2):
             'version="2.0">' + newl
         )
         writer.write(indent + "<channel>" + newl)
-        writer.write(indent + addindent + f"<title>{escape(self.title)}</title>{newl}")
-        writer.write(indent + addindent + f"<link>{escape(self.link)}</link>{newl}")
-        writer.write(indent + addindent + f"<description>{escape(self.description)}</description>{newl}")
+        writer.write(indent + addindent + "<title>%s</title>" % escape(self.title) + newl)
+        writer.write(indent + addindent + "<link>%s</link>" % escape(self.link) + newl)
+        writer.write(indent + addindent + "<description>%s</description>" % escape(self.description) + newl)
         if hasattr(self, 'language') and self.language:
-            writer.write(indent + addindent + f"<language>{escape(self.language)}</language>{newl}")
+            writer.write(indent + addindent + "<language>%s</language>" % escape(self.language) + newl)
         if hasattr(self, 'lastBuildDate') and self.lastBuildDate:
             writer.write(indent + addindent + "<lastBuildDate>%s</lastBuildDate>" %
                          self.lastBuildDate.strftime("%a, %d %b %Y %H:%M:%S +0000") + newl)
         if hasattr(self, 'docs') and self.docs:
-            writer.write(indent + addindent + f"<docs>{escape(self.docs)}</docs>{newl}")
+            writer.write(indent + addindent + "<docs>%s</docs>" % escape(self.docs) + newl)
         if hasattr(self, 'generator') and self.generator:
-            writer.write(indent + addindent + f"<generator>{escape(self.generator)}</generator>{newl}")
+            writer.write(indent + addindent + "<generator>%s</generator>" % escape(self.generator) + newl)
         if hasattr(self, 'ttl') and self.ttl is not None:
-            writer.write(indent + addindent + f"<ttl>{escape(str(self.ttl))}</ttl>{newl}")
-
+            writer.write(indent + addindent + "<ttl>%s</ttl>" % escape(str(self.ttl)) + newl)
         for item in self.items:
             item.writexml(writer, indent + addindent, addindent, newl)
-
         writer.write(indent + "</channel>" + newl)
         writer.write("</rss>" + newl)
 
-# ---------------- Main Asynchronous Logic ----------------
+# ---------------- Main Asynchronous Function ----------------
 
 async def process_novel(session, novel_title):
-    """Processes a single novel under the semaphore limit, extracting recent paid chapters."""
+    """Processes a single novel under the semaphore limit."""
     async with semaphore:
-        print(f"Scraping: {novel_title}")
-        novel_url = get_novel_url(novel_title)
-        if not novel_url:
-            print(f"No URL found for novel: {novel_title}")
-            return []
-
+        title = novel_title
+        novel_url = get_novel_url(title)
+        print(f"Scraping: {novel_url} for novel '{title}'")
         if not await novel_has_paid_update_async(session, novel_url):
-            print(f"Skipping {novel_title}: no recent premium update found.")
+            print(f"Skipping {title}: no recent premium update found.")
             return []
-
         paid_chapters, main_desc = await scrape_paid_chapters_async(session, novel_url)
+        if title.lower() == "after rebirth, i married my archenemy":
+            print(f"DEBUG: Processing '{title}' with {len(paid_chapters)} chapters found.")
         items = []
         if paid_chapters:
             for chap in paid_chapters:
@@ -360,15 +333,15 @@ async def process_novel(session, novel_title):
                 if pub_date.tzinfo is None:
                     pub_date = pub_date.replace(tzinfo=datetime.timezone.utc)
                 item = MyRSSItem(
-                    title=novel_title,
+                    title=title,
                     link=chap["link"],
                     description=chap["description"],
                     guid=PyRSS2Gen.Guid(chap["guid"], isPermaLink=False),
                     pubDate=pub_date,
-                    volume=chap["volume"],
                     chaptername=chap["chaptername"],
                     nameextend=chap["nameextend"],
-                    coin=chap.get("coin", "")
+                    coin=chap.get("coin", ""),
+                    volume=chap.get("volume", "")
                 )
                 items.append(item)
         return items
@@ -381,13 +354,14 @@ async def main_async():
             for novel_title in novel_titles:
                 tasks.append(asyncio.create_task(process_novel(session, novel_title)))
         results = await asyncio.gather(*tasks)
-    for items in results:
-        rss_items.extend(items)
-
+        for items in results:
+            rss_items.extend(items)
+    
     rss_items.sort(key=lambda item: (normalize_date(item.pubDate), chapter_num(item.chaptername)), reverse=True)
-    for it in rss_items:
-        print(f"{it.title} - Vol={it.volume} Chap={it.chaptername} => {it.pubDate}")
-
+    
+    for item in rss_items:
+        print(f"{item.title} - Volume: '{item.volume}' Chapter: {item.chaptername} ({chapter_num(item.chaptername)}) : {item.pubDate}")
+    
     new_feed = CustomRSS2(
         title="Dragonholic Paid Chapters",
         link="https://dragonholic.com",
@@ -395,18 +369,21 @@ async def main_async():
         lastBuildDate=datetime.datetime.now(datetime.timezone.utc),
         items=rss_items
     )
-
+    
     output_file = "dh_paid_feed.xml"
     with open(output_file, "w", encoding="utf-8") as f:
         new_feed.writexml(f, indent="  ", addindent="  ", newl="\n")
-
+    
     with open(output_file, "r", encoding="utf-8") as f:
         xml_content = f.read()
     dom = xml.dom.minidom.parseString(xml_content)
     pretty_xml = "\n".join([line for line in dom.toprettyxml(indent="  ").splitlines() if line.strip()])
     with open(output_file, "w", encoding="utf-8") as f:
         f.write(pretty_xml)
-
+    
+    for item in rss_items:
+        print(f"{item.title} - Volume: '{item.volume}' Chapter: {item.chaptername} ({chapter_num(item.chaptername)}) : {item.pubDate}")
+    
     print(f"Modified feed generated with {len(rss_items)} items.")
     print(f"Output written to {output_file}")
 
