@@ -118,6 +118,11 @@ TRANSLATOR_NOVEL_MAP = {
     ],
      "Wolffy": [
         "Honkai: Star Rail, My Journey with Tom"
+    ],
+     "Eris81194": [
+        "Did Mrs. Sheng Got Divorced Today?",
+        "The Strongest Delivery Man",
+        "Sweet Hunting Ground [GB]"
     ]
 }
 
@@ -150,7 +155,8 @@ DISCORD_ROLE_ID_MAP = {
     "Thyllia": "<@&1341625811828215819>",
     "kuro": "<@&1341625880845221919>",
     "Niang'er": "<@&1341672245407256577>",
-    "Wolffy": "<@&1341672309781565551>"
+    "Wolffy": "<@&1341672309781565551>",
+    "Eris81194": "<@&1359458280644284449>"
 }
 
 def get_translator(title):
@@ -286,6 +292,12 @@ def get_featured_image(title):
         return "https://dragonholic.com/wp-content/uploads/2025/02/Star-rail-novel-cover.jpg"
     if "Proof of the Demon Lord's Innocence" in title:
         return "https://dragonholic.com/wp-content/uploads/2025/01/魔王陛下の無罪証明.jpg"
+    if "Did Mrs. Sheng Got Divorced Today?" in title:
+        return "https://dragonholic.com/wp-content/uploads/2025/03/2368667.jpg"
+    if "The Strongest Delivery Man" in title:
+        return "https://dragonholic.com/wp-content/uploads/2025/03/IMG_2420.webp"
+    if "Sweet Hunting Ground [GB]" in title:
+        return "https://dragonholic.com/wp-content/uploads/2025/03/IMG_2433.jpeg"
     
     # If no image is found for the novel, return an empty string.
     return ""
@@ -306,7 +318,8 @@ NOVEL_URL_OVERRIDES = {
     "When I started High School, My Childhood Friend, who had suddenly become distant and cold, was harassed by a stranger. I stepped in to help, and as a result, from the following day, My Childhood Friend's behavior became unusual.": "https://dragonholic.com/novel/when-i-started-high-school-my-childhood-friend-who-had-suddenly-become-distant-and-cold-was-harassed-by-a-stranger-i-stepped-in-to-help-and-as-a-result-from-the-following-day-my-childhood-frien/",
     "The Female Lead is Looking at Me Differently (GL)": "https://dragonholic.com/novel/the-female-lead-is-looking-at-me-differently/",
     "A Moment Too Late (GL)": "https://dragonholic.com/novel/gl-a-moment-too-late/",
-    "After Marrying the Disabled Prince (BG)": "https://dragonholic.com/novel/after-marrying-the-disabled-prince/"
+    "After Marrying the Disabled Prince (BG)": "https://dragonholic.com/novel/after-marrying-the-disabled-prince/",
+    "The Strongest Delivery Man": "https://dragonholic.com/novel/the-strongest-delivery-guy/"
 }
 
 def get_novel_url(title):
