@@ -378,7 +378,8 @@ NOVEL_URL_OVERRIDES = {
     "The Female Lead is Looking at Me Differently (GL)": "https://dragonholic.com/novel/the-female-lead-is-looking-at-me-differently/",
     "A Moment Too Late (GL)": "https://dragonholic.com/novel/gl-a-moment-too-late/",
     "After Marrying the Disabled Prince (BG)": "https://dragonholic.com/novel/after-marrying-the-disabled-prince/",
-    "The Strongest Delivery Man": "https://dragonholic.com/novel/the-strongest-delivery-guy/"
+    "The Strongest Delivery Man": "https://dragonholic.com/novel/the-strongest-delivery-guy/",
+    "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My Beloved Using My Modern and Game Knowledge": "https://dragonholic.com/novel/the-necromance-of-love-and-death-reincarnated-as-a-tragic-villainous-aristocrat-defeated-early-in-the-game-i-rebel-against-the-scenario-with-my-beloved-modern-knowledge-and-game-knowledge/"
 }
 
 def get_novel_url(title):
