@@ -127,6 +127,9 @@ TRANSLATOR_NOVEL_MAP = {
         "Did Mrs. Sheng Got Divorced Today?",
         "The Strongest Delivery Man",
         "Sweet Hunting Ground [GB]"
+    ],
+     "Maomai": [
+        "Wicked Island Of Ireland"
     ]
 }
 
@@ -160,7 +163,8 @@ DISCORD_ROLE_ID_MAP = {
     "kuro": "<@&1341625880845221919>",
     "Niang'er": "<@&1341672245407256577>",
     "Wolffy": "<@&1341672309781565551>",
-    "Eris81194": "<@&1359458280644284449>"
+    "Eris81194": "<@&1359458280644284449>",
+    "Maomai": "<@&1291253732410920991>"
 }
 
 def get_translator(title):
@@ -309,7 +313,9 @@ def get_featured_image(title):
         "Don't Provoke the Black Lotus O [Transmigration Novel]":
             "https://dragonholic.com/wp-content/uploads/2025/03/324340s.jpg",
         "The Foolish General's Mute Spouse":
-            "https://dragonholic.com/wp-content/uploads/2025/03/342226s.jpg"
+            "https://dragonholic.com/wp-content/uploads/2025/03/342226s.jpg",
+        "Wicked Island Of Ireland":
+            "https://dragonholic.com/wp-content/uploads/2025/03/Wicked-Island-Of-Ireland1.jpg"
     }
     
     for key, url in featured_image_map.items():
@@ -371,5 +377,6 @@ def get_nsfw_novels():
         "Osratida",
         "The Three baby mining brothers",
         "Little Blind Girl",
-        "The Young Marquis Regrets Too Late"
+        "The Young Marquis Regrets Too Late",
+        "Wicked Island Of Ireland"
     ]
