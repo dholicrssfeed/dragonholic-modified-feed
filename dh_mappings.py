@@ -130,6 +130,20 @@ TRANSLATOR_NOVEL_MAP = {
     ],
      "Maomai": [
         "Wicked Island Of Ireland"
+    ],
+     "gediahp": [
+        "The Story of How I Pretended To Be A Boy and Ended Up Being Loved By A Mafia Boss",
+        "With The Fifth Loop, The Third Prince Has Been Added To The Cast.",
+        "The White Moonlight Disdained by the Male Protagonist of Redemption",
+        "The Heroic Tale of the Weakest Ability User ~The F-Ranker with the Dual Pistols~",
+        "Crossing the Two Realms: From a Trader to an Immortal Emperor",
+        "Commoner Queen: Falling in Love with His Royal Highness the Crown Prince",
+        "\"On the Day of Reunion, The Heir to the Wealthy Family Became My Brother\"",
+        "Sweet Kiss",
+        "It Was A Fake Marriage, But Jiu Qian Sui Took It Seriously",
+        "Dare to Cancel the Engagement? I Will Marry Your Ancestor!",
+        "Banishment is Fine: As a Genius Saint, I Can Shine Anywhere.",
+        "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My  Beloved Using My Modern and Game Knowledge"
     ]
 }
 
@@ -315,7 +329,31 @@ def get_featured_image(title):
         "The Foolish General's Mute Spouse":
             "https://dragonholic.com/wp-content/uploads/2025/03/342226s.jpg",
         "Wicked Island Of Ireland":
-            "https://dragonholic.com/wp-content/uploads/2025/03/Wicked-Island-Of-Ireland1.jpg"
+            "https://dragonholic.com/wp-content/uploads/2025/03/Wicked-Island-Of-Ireland1.jpg",
+        "The Story of How I Pretended To Be A Boy and Ended Up Being Loved By A Mafia Boss":
+            "https://dragonholic.com/wp-content/uploads/2025/04/38c9e83d-06c6-4d11-9067-121b2aef8af6.jpeg",
+        "With The Fifth Loop, The Third Prince Has Been Added To The Cast.":
+            "https://dragonholic.com/wp-content/uploads/2025/04/manhwa-style-with-a-prince-and-a-woman.jpg",
+        "The White Moonlight Disdained by the Male Protagonist of Redemption":
+            "https://dragonholic.com/wp-content/uploads/2025/04/133878576051325034.jpg",
+        "The Heroic Tale of the Weakest Ability User ~The F-Ranker with the Dual Pistols~":
+            "https://dragonholic.com/wp-content/uploads/2025/03/DALL%C2%B7E-2025-03-19-23.24.13-A-young-male-protagonist-with-a-determined-expression-wielding-two-sleek-handguns-in-a-battle-ready-stance.-He-wears-a-dark-jacket-with-red-or-silver.webp",
+        "Crossing the Two Realms: From a Trader to an Immortal Emperor":
+            "https://dragonholic.com/wp-content/uploads/2025/03/book_177955.jpg",
+        "Commoner Queen: Falling in Love with His Royal Highness the Crown Prince":
+            "https://dragonholic.com/wp-content/uploads/2025/03/22136_enhanced.jpg",
+        "\"On the Day of Reunion, The Heir to the Wealthy Family Became My Brother\"":
+            "https://dragonholic.com/wp-content/uploads/2025/03/On-the-day-of-the-reunion.jpg",
+        "Sweet Kiss":
+            "https://dragonholic.com/wp-content/uploads/2025/03/book_177723.jpg",
+        "It Was A Fake Marriage, But Jiu Qian Sui Took It Seriously":
+            "https://dragonholic.com/wp-content/uploads/2025/03/Novel-4.jpg",
+        "Dare to Cancel the Engagement? I Will Marry Your Ancestor!":
+            "https://dragonholic.com/wp-content/uploads/2025/02/chinese.jpg",
+        "Banishment is Fine: As a Genius Saint, I Can Shine Anywhere.":
+            "https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-27-21.57.04-A-confident-and-elegant-young-saint-with-golden-hair-and-piercing-blue-eyes-dressed-in-a-flowing-white-robe-standing-proudly-in-front-of-a-grand-tem.webp",
+        "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My  Beloved Using My Modern and Game Knowledge":
+            "https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-20-19.23.11-A-romantic-yet-eerie-scene-featuring-a-noble-protagonist-and-their-beloved-standing-close-together-in-a-gothic-moonlit-graveyard.-The-protagonist-ha.webp"
     }
     
     for key, url in featured_image_map.items():
