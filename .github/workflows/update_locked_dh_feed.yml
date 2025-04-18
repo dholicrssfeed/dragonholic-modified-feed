@@ -39,13 +39,8 @@ jobs:
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
 
-          # Ensure the branch is up-to-date
-          git fetch origin main
-          git reset --hard origin/main
-
           git add dh_paid_feed.xml
           git commit -m "Update paid XML feed" || echo "No changes to commit"
 
-          # Pull latest changes and push
           git pull --rebase
           git push
