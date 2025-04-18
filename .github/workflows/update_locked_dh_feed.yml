@@ -32,7 +32,7 @@ jobs:
           pip install requests beautifulsoup4 PyRSS2Gen aiohttp
 
       - name: Run Feed Generator
-        run: python dh_paid_feed_generator2.py
+        run: python dh_paid_feed_generator.py
 
       - name: Commit and Push Changes
         run: |
