@@ -81,7 +81,6 @@ TRANSLATOR_NOVEL_MAP = {
         "Guide to the Fallen World"
     ],
     "Sunnie": [
-        "Osratida",
         "The Three baby mining brothers"
     ],
     "Yumari": [
@@ -285,8 +284,6 @@ def get_featured_image(title):
             "https://dragonholic.com/wp-content/uploads/2024/12/20201118203028_200_280.jpg",
         "Guide to the Fallen World":
             "https://dragonholic.com/wp-content/uploads/2024/11/images-3.jpeg",
-        "Osratida":
-            "https://dragonholic.com/wp-content/uploads/2024/08/IMG_20240822_061109_743.jpg",
         "The Three baby mining brothers":
             "https://dragonholic.com/wp-content/uploads/2024/12/FZMzZOtUIAEv62-.jpg",
         "After Marrying the Disabled Prince (BG)":
@@ -414,7 +411,6 @@ def get_nsfw_novels():
         "A Forest flowing with Milk and Honey",
         "Zion's Garden",
         "Diary of my Ex",
-        "Osratida",
         "The Three baby mining brothers",
         "Little Blind Girl",
         "The Young Marquis Regrets Too Late",
