@@ -379,22 +379,6 @@ NOVEL_URL_OVERRIDES = {
     "The Strongest Delivery Man": "https://dragonholic.com/novel/the-strongest-delivery-guy/",
     "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My Beloved Using My Modern and Game Knowledge": "https://dragonholic.com/novel/the-necromance-of-love-and-death-reincarnated-as-a-tragic-villainous-aristocrat-defeated-early-in-the-game-i-rebel-against-the-scenario-with-my-beloved-modern-knowledge-and-game-knowledge/"
 }
-
-def get_novel_url(title):
-    """
-    Returns the main page URL for the given novel title.
-    First checks NOVEL_URL_OVERRIDES for a manual override.
-    If none exists, constructs the URL using a slug.
-    """
-    if title in NOVEL_URL_OVERRIDES and NOVEL_URL_OVERRIDES[title]:
-        return NOVEL_URL_OVERRIDES[title]
-    # Fallback: create URL from slug
-    def slugify(text):
-        text = text.lower()
-        import re
-        text = re.sub(r'[^\w\s-]', '', text)
-        return re.sub(r'[\s]+', '-', text)
-    return f"https://dragonholic.com/novel/{slugify(title)}/"
     
 def get_nsfw_novels():
     """
