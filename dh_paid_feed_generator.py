@@ -13,7 +13,6 @@ from urllib.parse import quote
 from dh_mappings import (
     TRANSLATOR_NOVEL_MAP,
     NOVEL_URL_OVERRIDES,
-    get_novel_url,
     get_featured_image,
     get_translator,
     get_discord_role_id,
@@ -21,17 +20,32 @@ from dh_mappings import (
 )
 
 semaphore = asyncio.Semaphore(100)
-    
+
+def get_novel_url(title: str) -> str:
+    """
+    Returns the main page URL for the given novel title.
+    Uses NOVEL_URL_OVERRIDES if present, otherwise
+    slugs via our unified slug() (keeps ☆④, collapses ASCII punctuation).
+    """
+    override = NOVEL_URL_OVERRIDES.get(title)
+    if override:
+        return override
+    return f"https://dragonholic.com/novel/{slug(title)}/"
+
 def slug(text: str) -> str:
-    # 1) lowercase and trim
+    # 1) lowercase + trim
     s = text.lower().strip()
-    # 2) collapse all whitespace to single spaces
-    s = re.sub(r"\s+", " ", s)
-    # 3) replace spaces with hyphens
-    s = s.replace(" ", "-")
-    # 4) percent‑encode everything *except*:
-    #    alphanumerics, hyphen, underscore, dot, tilde, comma, exclamation, parentheses
-    return quote(s, safe="-_.~,!()")
+
+    # 2) remove ASCII punctuation but keep non‑ASCII, word chars, whitespace & hyphens
+    s = re.sub(r"[^\w\s\u0080-\uFFFF-]", "", s)
+
+    # 3) collapse whitespace/underscores into single hyphens
+    s = re.sub(r"[\s_]+", "-", s)
+
+    # 4) collapse any multiple hyphens into one
+    s = re.sub(r"-{2,}", "-", s)
+
+    return s
 
 def split_title(full_title: str):
     parts = full_title.split(" - ", 1)
@@ -265,7 +279,6 @@ class CustomRSS2(PyRSS2Gen.RSS2):
 
 async def process_novel(session, title: str):
     try:
-        # ── your existing logic exactly as before ──
         override = NOVEL_URL_OVERRIDES.get(title)
         base    = get_novel_url(title)
         to_try  = [base]
