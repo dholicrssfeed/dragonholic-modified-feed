@@ -46,12 +46,6 @@ def clean_description(raw_desc: str) -> str:
     cleaned = soup.decode_contents()
     return re.sub(r'\s+', ' ', cleaned).strip()
 
-def split_title(full_title: str):
-    parts = full_title.split(" - ", 1)
-    if len(parts) == 2:
-        return parts[0].strip(), parts[1].strip()
-    return full_title.strip(), ""
-
 def extract_pubdate_from_soup(chap) -> datetime.datetime:
     span = chap.select_one("span.chapter-release-date i")
     if not span:
@@ -113,8 +107,16 @@ async def scrape_paid_chapters_async(session, base_url: str):
                     continue
 
                 a = chap_li.find("a")
-                raw_title = a.get_text(" ", strip=True)
-                chap_name, nameext = split_title(raw_title)
+                # pull raw HTML of the <a> so we can split around the lock-icon <i>
+                raw_html = a.decode_contents()
+            
+                # 1) chaptername = everything before the first "<"
+                m1 = re.match(r'\s*([^<]+)', raw_html)
+                chap_name = m1.group(1).strip() if m1 else raw_html.strip()
+            
+                # 2) nameextend = whatever follows the </i> dash
+                m2 = re.search(r'</i>\s*-\s*(.+)', raw_html)
+                nameext = m2.group(1).strip() if m2 else ""
                 num_m = re.search(r"(\d+(?:\.\d+)?)", chap_name)
                 chap_id = num_m.group(1) if num_m else ""
                 href = a.get("href","").strip()
@@ -148,8 +150,16 @@ async def scrape_paid_chapters_async(session, base_url: str):
                 continue
 
             a = chap_li.find("a")
-            raw_title = a.get_text(" ", strip=True)
-            chap_name, nameext = split_title(raw_title)
+            # pull raw HTML of the <a> so we can split around the lock-icon <i>
+            raw_html = a.decode_contents()
+        
+            # 1) chaptername = everything before the first "<"
+            m1 = re.match(r'\s*([^<]+)', raw_html)
+            chap_name = m1.group(1).strip() if m1 else raw_html.strip()
+        
+            # 2) nameextend = whatever follows the </i> dash
+            m2 = re.search(r'</i>\s*-\s*(.+)', raw_html)
+            nameext = m2.group(1).strip() if m2 else ""
             num_m = re.search(r"(\d+(?:\.\d+)?)", chap_name)
             chap_id = num_m.group(1) if num_m else ""
             href = a.get("href","").strip()
