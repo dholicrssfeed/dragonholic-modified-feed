@@ -3,6 +3,7 @@ import re
 import datetime
 import asyncio
 import aiohttp
+import feedparser
 from bs4 import BeautifulSoup
 import PyRSS2Gen
 import xml.dom.minidom
@@ -232,52 +233,53 @@ class CustomRSS2(PyRSS2Gen.RSS2):
         w("</rss>" + newl)
 
 async def process_novel(session, title: str):
-    # Build list of URLs to try: override first, then slug.
-    override = NOVEL_URL_OVERRIDES.get(title)
-    slugged = slugify_title(title)
-    to_try = ([override] if override else []) + [slugged]
+    try:
+        # ── your existing logic exactly as before ──
+        override = NOVEL_URL_OVERRIDES.get(title)
+        slugged  = slugify_title(title)
+        to_try   = ([override] if override else []) + [slugged]
 
-    base_url = None
-    for url in to_try:
-        html = await fetch_page(session, url)
-        if html:
-            base_url = url
-            break
-    if not base_url:
-        print(f"❌  Could not fetch ANY page for '{title}', skipping.")
+        base_url = None
+        for url in to_try:
+            html = await fetch_page(session, url)
+            if html:
+                base_url = url
+                break
+        if not base_url:
+            print(f"❌  Could not fetch ANY page for '{title}', skipping.")
+            return []
+
+        paid_list, _ = await scrape_paid_chapters_async(session, base_url)
+        if not paid_list:
+            return []
+
+        chapters, _ = await scrape_paid_chapters_async(session, base_url)
+        items = []
+        for chap in chapters:
+            pd = chap["pubDate"]
+            if pd.tzinfo is None:
+                pd = pd.replace(tzinfo=datetime.timezone.utc)
+            if pd.minute >= 30:
+                pd += datetime.timedelta(hours=1)
+            pd = pd.replace(minute=0, second=0, microsecond=0)
+
+            items.append(MyRSSItem(
+                title=title,
+                volume=chap["volume"],
+                chaptername=chap["chaptername"],
+                nameextend=chap["nameextend"],
+                link=chap["link"],
+                description=chap["description"],
+                guid=PyRSS2Gen.Guid(chap["guid"], isPermaLink=False),
+                pubDate=pd,
+                coin=chap.get("coin","")
+            ))
+        return items
+
+    except Exception as e:
+        # catch anything unexpected, log it, and keep going
+        print(f"❌ Error processing {title}: {e}")
         return []
-
-    # quick check: any paid update in last 7d?
-    paid_list, _ = await scrape_paid_chapters_async(session, base_url)
-    if not paid_list:
-        # no recent paid chapters, skip
-        return []
-
-    # now full scrape
-    chapters, _ = await scrape_paid_chapters_async(session, base_url)
-    items = []
-    for chap in chapters:
-        pd = chap["pubDate"]
-        if pd.tzinfo is None:
-            pd = pd.replace(tzinfo=datetime.timezone.utc)
-        
-        # Round to the nearest hour:
-        if pd.minute >= 30:
-            pd = pd + datetime.timedelta(hours=1)
-        
-        pd = pd.replace(minute=0, second=0, microsecond=0)
-        items.append(MyRSSItem(
-            title=title,
-            volume=chap["volume"],
-            chaptername=chap["chaptername"],
-            nameextend=chap["nameextend"],
-            link=chap["link"],
-            description=chap["description"],
-            guid=PyRSS2Gen.Guid(chap["guid"], isPermaLink=False),
-            pubDate=pd,
-            coin=chap.get("coin","")
-        ))
-    return items
 
 async def main_async():
     all_items = []
@@ -305,7 +307,20 @@ async def main_async():
     with open(xml_path, "w", encoding="utf-8") as f:
         # strip blank lines
         f.write("\n".join(l for l in pretty.splitlines() if l.strip()))
+        
+    # ---------------------------------------------------
+    # sanity‑check: make sure every mapped novel actually appeared
 
+    with open(xml_path, "r", encoding="utf-8") as f:
+        feed = feedparser.parse(f.read())
+    titles_in_feed = {entry.title for entry in feed.entries}
+
+    for translator, novels in TRANSLATOR_NOVEL_MAP.items():
+        for novel in novels:
+            if novel not in titles_in_feed:
+                print(f"❌ No feed entries for: {novel}")
+    # ---------------------------------------------------
+    
     print(f"✅  Feed generated with {len(all_items)} items.")
 
 if __name__ == "__main__":
