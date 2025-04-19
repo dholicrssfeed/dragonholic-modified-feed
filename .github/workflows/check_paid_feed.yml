@@ -11,17 +11,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
         with:
-          ref: main
           fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
-        with: { python-version: '3.x' }
+        with:
+          python-version: '3.x'
 
-      - name: Install Dependencies
-        run: pip install feedparser aiohttp
+      - name: Install dependencies
+        run: pip install feedparser aiohttp beautifulsoup4
 
       - name: Run “All‑Paid” Checker
         run: python check_paid_all.py
