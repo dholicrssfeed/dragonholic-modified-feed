@@ -48,62 +48,46 @@ def chapter_num(chaptername):
         return (0,)
     return tuple(float(n) if '.' in n else int(n) for n in numbers)
 
-def format_volume_from_url(url: str, main_title: str) -> str:
+from urllib.parse import urlparse, unquote
+
+def format_volume_from_url(url: str) -> str:
     """
-    Given a chapter URL and the main novel title, pulls out the first “folder”
-    after the novel slug as a human‑readable volume/arc label.
-    Falls back to "" if it can’t find a two‑segment path after the title.
+    Given a chapter URL from Dragonholic’s own RSS feed, pull out the
+    first folder after the `/novel/<slug>/` as a human‑readable volume/arc.
     """
-    parsed = urlparse(url)
-    segments = [seg for seg in parsed.path.split("/") if seg]
-    try:
-        # find the segment matching the novel’s slug
-        # 1) lowercase
-        clean = main_title.lower()
-        # 2) strip out _all_ ASCII punctuation (keep letters, digits, whitespace, hyphens)
-        clean = re.sub(r"[^\w\s-]", "", clean)
-        # 3) spaces → hyphens
-        slug = re.sub(r"\s+", "-", clean)
-        # 4) collapse any runs of “--” into a single “-”
-        slug = re.sub(r"-{2,}", "-", slug).strip("-")
-        idx = segments.index(slug)
-        post_slug = segments[idx + 1:]
-        if len(post_slug) >= 2:
-            raw_volume = unquote(post_slug[0]).strip("/")
-            original = raw_volume
+    path_segments = [seg for seg in urlparse(url).path.split("/") if seg]
+    # path_segments == ["novel", "<novel‑slug>", "<volume‑slug>", "chapter‑xxx", …]
 
-            # normalize: underscores → hyphens, strip extra hyphens
-            raw = raw_volume.replace("_", "-").strip("-")
-            parts = raw.split("-")
-            if not parts:
-                return original
+    # if we have at least novel‑slug + volume‑slug + chapter‑slug…
+    if len(path_segments) >= 3 and path_segments[0] == "novel":
+        raw = unquote(path_segments[2]).strip("/")
+        # normalize underscores → hyphens, strip extra hyphens
+        raw = raw.replace("_", "-").strip("-")
+        parts = raw.split("-")
+        if not parts:
+            return raw
 
-            colon_keywords = {
-                "volume", "chapter", "vol", "chap", "arc",
-                "world", "plane", "story", "v"
-            }
-            lead = parts[0].lower()
+        colon_keywords = {
+            "volume", "chapter", "vol", "chap", "arc",
+            "world", "plane", "story", "v"
+        }
+        lead = parts[0].lower()
 
-            # e.g. “volume-3” or “vol-2-title”
-            if lead in colon_keywords and len(parts) >= 2 and parts[1].isdigit():
-                number = parts[1]
-                rest = parts[2:]
-                # special “v” → “V3”
-                label = lead.capitalize() if lead != "v" else "V" + number
-                if lead == "v":
-                    return f"{label}: {' '.join(p.capitalize() for p in rest)}" if rest else label
-                title = " ".join(p.capitalize() for p in rest)
-                return f"{label} {number}: {title}" if rest else f"{label} {number}"
+        # e.g. “volume-3” or “vol-2-title”
+        if lead in colon_keywords and len(parts) >= 2 and parts[1].isdigit():
+            num = parts[1]
+            rest = parts[2:]
+            label = lead.capitalize() if lead != "v" else "V" + num
+            title = " ".join(p.capitalize() for p in rest)
+            return f"{label} {num}: {title}" if rest else label + " " + num
 
-            # e.g. “3-the-dawn” → “3: The Dawn”
-            if lead.isdigit() and len(parts) > 1:
-                title = " ".join(p.capitalize() for p in parts[1:])
-                return f"{lead}: {title}"
+        # e.g. “3-the-dawn” → “3: The Dawn”
+        if lead.isdigit() and len(parts) > 1:
+            title = " ".join(p.capitalize() for p in parts[1:])
+            return f"{lead}: {title}"
 
-            # otherwise title‑case everything (non‑ASCII left alone)
-            return " ".join(p.capitalize() if p.isascii() else p for p in parts)
-    except Exception:
-        pass
+        # otherwise title‑case each ascii chunk, leave non‑ASCII alone
+        return " ".join(p.capitalize() if p.isascii() else p for p in parts)
 
     return ""
 
@@ -189,7 +173,7 @@ def main():
     parsed_feed = feedparser.parse(feed_url)
     for entry in parsed_feed.entries:
         main_title, chaptername, nameextend = split_title(entry.title)
-        volume = format_volume_from_url(entry.link, main_title)
+        volume = format_volume_from_url(entry.link)
         translator = get_translator(main_title)
         if not translator:
             print("Skipping item (no translator found):", main_title)
