@@ -66,37 +66,37 @@ def smart_title(parts: list[str]) -> str:
 def format_volume_from_url(url: str) -> str:
     """
     Given a DH chapter link like
-      /novel/slug/volume-2-a-blade-drawn-on-the-bowstring/chapter-87/
-    returns “Volume 2: A Blade Drawn on the Bowstring”.
-    Returns "" if no distinct volume folder is present.
+      /novel/slug/volume-2-some-arc/chapter-10/
+    returns “Volume 2: Some Arc”.
+    Returns "" if there is no distinct volume folder.
     """
     segs = [s for s in urlparse(url).path.split("/") if s]
-    if len(segments) >= 4 and segments[0] == "novel":
-        raw = unquote(segments[2]).strip("/")
+
+    # require: ["novel", "<slug>", "<volume‑slug>", "chapter‑slug", …]
+    if len(segs) >= 4 and segs[0] == "novel":
+        raw = unquote(segs[2]).replace("_", "-").strip("-")
         parts = raw.split("-")
         if not parts:
             return ""
 
-        # ←– HERE is your colon_keywords block
         colon_keywords = {
             "volume", "chapter", "vol", "chap", "arc",
             "world", "plane", "story", "v"
         }
         lead = parts[0].lower()
+
         if lead in colon_keywords and len(parts) >= 2 and parts[1].isdigit():
-            num  = parts[1]
+            num = parts[1]
             rest = parts[2:]
-            # e.g. “v-3” → “V3”
             if lead == "v":
                 title = " ".join(p.capitalize() for p in rest)
                 return f"V{num}: {title}" if rest else f"V{num}"
-            # e.g. “volume-2-title” → “Volume 2: Title”
             label = lead.capitalize()
             title = " ".join(p.capitalize() for p in rest)
             return f"{label} {num}: {title}" if rest else f"{label} {num}"
 
-        # fallback: title‑case everything else
-        return smart_title(parts)
+        # fallback: title‑case all parts
+        return " ".join(p.capitalize() if p.isascii() else p for p in parts)
 
     return ""
 
