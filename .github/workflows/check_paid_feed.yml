@@ -21,7 +21,7 @@ jobs:
         with: { python-version: '3.x' }
 
       - name: Install Dependencies
-        run: pip install feedparser
+        run: pip install feedparser aiohttp
 
       - name: Run “All‑Paid” Checker
         run: python check_paid_all.py
