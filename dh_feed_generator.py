@@ -71,8 +71,8 @@ def format_volume_from_url(url: str) -> str:
     Returns "" if no distinct volume folder is present.
     """
     segs = [s for s in urlparse(url).path.split("/") if s]
-    if len(segs) >= 3 and segs[0] == "novel":
-        raw = unquote(segs[2]).replace("_","-").strip("-")
+    if len(segments) >= 4 and segments[0] == "novel":
+        raw = unquote(segments[2]).strip("/")
         parts = raw.split("-")
         if not parts:
             return ""
