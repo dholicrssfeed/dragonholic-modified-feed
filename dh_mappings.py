@@ -142,7 +142,7 @@ TRANSLATOR_NOVEL_MAP = {
         "It Was A Fake Marriage, But Jiu Qian Sui Took It Seriously",
         "Dare to Cancel the Engagement? I Will Marry Your Ancestor!",
         "Banishment is Fine: As a Genius Saint, I Can Shine Anywhere.",
-        "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My  Beloved Using My Modern and Game Knowledge"
+        "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My Beloved Using My Modern and Game Knowledge"
     ]
 }
 
@@ -350,7 +350,7 @@ def get_featured_image(title):
             "https://dragonholic.com/wp-content/uploads/2025/02/chinese.jpg",
         "Banishment is Fine: As a Genius Saint, I Can Shine Anywhere.":
             "https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-27-21.57.04-A-confident-and-elegant-young-saint-with-golden-hair-and-piercing-blue-eyes-dressed-in-a-flowing-white-robe-standing-proudly-in-front-of-a-grand-tem.webp",
-        "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My  Beloved Using My Modern and Game Knowledge":
+        "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My Beloved Using My Modern and Game Knowledge":
             "https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-20-19.23.11-A-romantic-yet-eerie-scene-featuring-a-noble-protagonist-and-their-beloved-standing-close-together-in-a-gothic-moonlit-graveyard.-The-protagonist-ha.webp"
     }
     
