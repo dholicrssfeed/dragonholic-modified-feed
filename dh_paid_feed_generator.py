@@ -8,10 +8,12 @@ from bs4 import BeautifulSoup
 import PyRSS2Gen
 import xml.dom.minidom
 from xml.sax.saxutils import escape
+from urllib.parse import quote
 
 from dh_mappings import (
     TRANSLATOR_NOVEL_MAP,
     NOVEL_URL_OVERRIDES,
+    get_novel_url,
     get_featured_image,
     get_translator,
     get_discord_role_id,
@@ -19,19 +21,17 @@ from dh_mappings import (
 )
 
 semaphore = asyncio.Semaphore(100)
-
-def slugify_title(title: str) -> str:
-    """Make the slug fallback URL for a given novel title."""
-    slug = title.lower()
-    slug = re.sub(r"[^\w\s-]", "", slug)
-    slug = re.sub(r"[\s]+", "-", slug)
-    return f"https://dragonholic.com/novel/{slug}/"
     
 def slug(text: str) -> str:
-    s = text.lower()
-    s = re.sub(r"[^\w\s-]", "", s)
-    s = re.sub(r"\s+", "-", s)
-    return s
+    # 1) lowercase and trim
+    s = text.lower().strip()
+    # 2) collapse all whitespace to single spaces
+    s = re.sub(r"\s+", " ", s)
+    # 3) replace spaces with hyphens
+    s = s.replace(" ", "-")
+    # 4) percent‑encode everything *except*:
+    #    alphanumerics, hyphen, underscore, dot, tilde, comma, exclamation, parentheses
+    return quote(s, safe="-_.~,!()")
 
 def split_title(full_title: str):
     parts = full_title.split(" - ", 1)
@@ -267,8 +267,8 @@ async def process_novel(session, title: str):
     try:
         # ── your existing logic exactly as before ──
         override = NOVEL_URL_OVERRIDES.get(title)
-        slugged  = slugify_title(title)
-        to_try   = ([override] if override else []) + [slugged]
+        base    = get_novel_url(title)
+        to_try  = [base]
 
         base_url = None
         for url in to_try:
