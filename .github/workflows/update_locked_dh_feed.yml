@@ -29,7 +29,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install requests beautifulsoup4 PyRSS2Gen aiohttp
+          pip install requests feedparser beautifulsoup4 PyRSS2Gen aiohttp
 
       - name: Run Feed Generator
         run: python dh_paid_feed_generator.py
