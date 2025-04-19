@@ -27,6 +27,12 @@ def slugify_title(title: str) -> str:
     slug = re.sub(r"[\s]+", "-", slug)
     return f"https://dragonholic.com/novel/{slug}/"
 
+def split_title(full_title: str):
+    parts = full_title.split(" - ", 1)
+    if len(parts) == 2:
+        return parts[0].strip(), parts[1].strip()
+    return full_title.strip(), ""
+
 async def fetch_page(session, url: str) -> str:
     """Fetch a page; on non-200 or exception, log & return empty string."""
     try:
@@ -95,9 +101,11 @@ async def scrape_paid_chapters_async(session, base_url: str):
     vol_ul = soup.select_one("ul.main.version-chap.volumns")
     if vol_ul:
         for vol_parent in vol_ul.select("li.parent.has-child"):
-            vol_label = vol_parent.select_one("a.has-child").get_text(strip=True)
-            m = re.match(r".*?(\d+(?:\.\d+)?).*", vol_label)
-            vol_id = m.group(1) if m else vol_label
+            # full dropdown text, e.g. "1 - Chalize is Dead"
+            vol_label    = vol_parent.select_one("a.has-child").get_text(strip=True)
+            vol_display  = vol_label
+            # numeric part for URL fallback
+            vol_id       = vol_label.split(" - ",1)[0].strip()
 
             for chap_li in vol_parent.select("ul.sub-chap-list li.wp-manga-chapter"):
                 if "free-chap" in chap_li.get("class", []):
@@ -107,16 +115,9 @@ async def scrape_paid_chapters_async(session, base_url: str):
                     continue
 
                 a = chap_li.find("a")
-                # pull raw HTML of the <a> so we can split around the lock-icon <i>
-                raw_html = a.decode_contents()
-            
-                # 1) chaptername = everything before the first "<"
-                m1 = re.match(r'\s*([^<]+)', raw_html)
-                chap_name = m1.group(1).strip() if m1 else raw_html.strip()
-            
-                # 2) nameextend = whatever follows the </i> dash
-                m2 = re.search(r'</i>\s*-\s*(.+)', raw_html)
-                nameext = m2.group(1).strip() if m2 else ""
+                # simple split on the first " - " in the link text:
+                raw_title = a.get_text(" ", strip=True)
+                chap_name, nameext = split_title(raw_title)
                 num_m = re.search(r"(\d+(?:\.\d+)?)", chap_name)
                 chap_id = num_m.group(1) if num_m else ""
                 href = a.get("href","").strip()
@@ -129,7 +130,7 @@ async def scrape_paid_chapters_async(session, base_url: str):
                        if chap_li.select_one("span.coin") else ""
 
                 paid.append({
-                    "volume":      vol_id,
+                    "volume":      vol_display,
                     "chaptername": chap_name,
                     "nameextend":  nameext,
                     "link":        link,
@@ -150,16 +151,9 @@ async def scrape_paid_chapters_async(session, base_url: str):
                 continue
 
             a = chap_li.find("a")
-            # pull raw HTML of the <a> so we can split around the lock-icon <i>
-            raw_html = a.decode_contents()
-        
-            # 1) chaptername = everything before the first "<"
-            m1 = re.match(r'\s*([^<]+)', raw_html)
-            chap_name = m1.group(1).strip() if m1 else raw_html.strip()
-        
-            # 2) nameextend = whatever follows the </i> dash
-            m2 = re.search(r'</i>\s*-\s*(.+)', raw_html)
-            nameext = m2.group(1).strip() if m2 else ""
+            # simple split on the first " - " in the link text:
+            raw_title = a.get_text(" ", strip=True)
+            chap_name, nameext = split_title(raw_title)
             num_m = re.search(r"(\d+(?:\.\d+)?)", chap_name)
             chap_id = num_m.group(1) if num_m else ""
             href = a.get("href","").strip()
