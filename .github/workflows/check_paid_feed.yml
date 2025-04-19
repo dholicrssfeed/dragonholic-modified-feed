@@ -22,7 +22,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install dependencies
-        run: pip install feedparser aiohttp beautifulsoup4
+        run: pip install feedparser aiohttp beautifulsoup4 PyRSS2Gen
 
       - name: Run “All‑Paid” Checker
         run: python check_paid_all.py
