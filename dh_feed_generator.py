@@ -4,6 +4,7 @@ import feedparser
 import PyRSS2Gen
 import xml.dom.minidom
 from xml.sax.saxutils import escape
+from urllib.parse import urlparse, unquote
 
 # Import mapping functions from your mappings file (named dh_mappings.py)
 from dh_mappings import get_translator, get_featured_image, get_discord_role_id, get_nsfw_novels
@@ -47,15 +48,69 @@ def chapter_num(chaptername):
         return (0,)
     return tuple(float(n) if '.' in n else int(n) for n in numbers)
 
+def format_volume_from_url(url: str, main_title: str) -> str:
+    """
+    Given a chapter URL and the main novel title, pulls out the first “folder”
+    after the novel slug as a human‑readable volume/arc label.
+    Falls back to "" if it can’t find a two‑segment path after the title.
+    """
+    parsed = urlparse(url)
+    segments = [seg for seg in parsed.path.split("/") if seg]
+    try:
+        # find the segment matching the novel’s slug
+        slug = main_title.replace(" ", "-").lower()
+        idx = segments.index(slug)
+        post_slug = segments[idx + 1:]
+        if len(post_slug) >= 2:
+            raw_volume = unquote(post_slug[0]).strip("/")
+            original = raw_volume
+
+            # normalize: underscores → hyphens, strip extra hyphens
+            raw = raw_volume.replace("_", "-").strip("-")
+            parts = raw.split("-")
+            if not parts:
+                return original
+
+            colon_keywords = {
+                "volume", "chapter", "vol", "chap", "arc",
+                "world", "plane", "story", "v"
+            }
+            lead = parts[0].lower()
+
+            # e.g. “volume-3” or “vol-2-title”
+            if lead in colon_keywords and len(parts) >= 2 and parts[1].isdigit():
+                number = parts[1]
+                rest = parts[2:]
+                # special “v” → “V3”
+                label = lead.capitalize() if lead != "v" else "V" + number
+                if lead == "v":
+                    return f"{label}: {' '.join(p.capitalize() for p in rest)}" if rest else label
+                title = " ".join(p.capitalize() for p in rest)
+                return f"{label} {number}: {title}" if rest else f"{label} {number}"
+
+            # e.g. “3-the-dawn” → “3: The Dawn”
+            if lead.isdigit() and len(parts) > 1:
+                title = " ".join(p.capitalize() for p in parts[1:])
+                return f"{lead}: {title}"
+
+            # otherwise title‑case everything (non‑ASCII left alone)
+            return " ".join(p.capitalize() if p.isascii() else p for p in parts)
+    except Exception:
+        pass
+
+    return ""
+
 class MyRSSItem(PyRSS2Gen.RSSItem):
-    def __init__(self, *args, chaptername="", nameextend="", **kwargs):
+    def __init__(self, *args, volume="", chaptername="", nameextend="", **kwargs):
+        self.volume      = volume
         self.chaptername = chaptername
-        self.nameextend = nameextend
+        self.nameextend  = nameextend
         super().__init__(*args, **kwargs)
     
     def writexml(self, writer, indent="", addindent="", newl=""):
         writer.write(indent + "  <item>" + newl)
         writer.write(indent + "    <title>%s</title>" % escape(self.title) + newl)
+        writer.write(indent + "    <volume>%s</volume>"      % escape(self.volume)      + newl)
         writer.write(indent + "    <chaptername>%s</chaptername>" % escape(self.chaptername) + newl)
         formatted_nameextend = f"***{self.nameextend}***" if self.nameextend.strip() else ""
         writer.write(indent + "    <nameextend>%s</nameextend>" % escape(formatted_nameextend) + newl)
@@ -127,6 +182,7 @@ def main():
     parsed_feed = feedparser.parse(feed_url)
     for entry in parsed_feed.entries:
         main_title, chaptername, nameextend = split_title(entry.title)
+        volume = format_volume_from_url(entry.link, main_title)
         translator = get_translator(main_title)
         if not translator:
             print("Skipping item (no translator found):", main_title)
@@ -138,6 +194,7 @@ def main():
             description=entry.description,
             guid=PyRSS2Gen.Guid(entry.id, isPermaLink=False),
             pubDate=pub_date,
+            volume=volume,    
             chaptername=chaptername,
             nameextend=nameextend
         )
