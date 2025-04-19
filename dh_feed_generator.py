@@ -52,15 +52,16 @@ from urllib.parse import urlparse, unquote
 
 def format_volume_from_url(url: str) -> str:
     """
-    Given a chapter URL from Dragonholic’s own RSS feed, pull out the
-    first folder after the `/novel/<slug>/` as a human‑readable volume/arc.
+    Given a Dragonholic chapter URL, pull out the first folder
+    after /novel/<slug>/ as a human‑readable volume/arc label.
+    Returns "" if there is no separate volume segment.
     """
-    path_segments = [seg for seg in urlparse(url).path.split("/") if seg]
-    # path_segments == ["novel", "<novel‑slug>", "<volume‑slug>", "chapter‑xxx", …]
+    # split out non‑empty path segments
+    segments = [seg for seg in urlparse(url).path.split("/") if seg]
 
-    # if we have at least novel‑slug + volume‑slug + chapter‑slug…
-    if len(path_segments) >= 3 and path_segments[0] == "novel":
-        raw = unquote(path_segments[2]).strip("/")
+    # only if we see: ["novel", "<slug>", "<volume‑slug>", "chapter‑xxx", …]
+    if len(segments) >= 4 and segments[0] == "novel":
+        raw = unquote(segments[2]).strip("/")
         # normalize underscores → hyphens, strip extra hyphens
         raw = raw.replace("_", "-").strip("-")
         parts = raw.split("-")
@@ -75,20 +76,23 @@ def format_volume_from_url(url: str) -> str:
 
         # e.g. “volume-3” or “vol-2-title”
         if lead in colon_keywords and len(parts) >= 2 and parts[1].isdigit():
-            num = parts[1]
+            num  = parts[1]
             rest = parts[2:]
             label = lead.capitalize() if lead != "v" else "V" + num
+            if lead == "v":
+                return f"{label}: {' '.join(p.capitalize() for p in rest)}" if rest else label
             title = " ".join(p.capitalize() for p in rest)
-            return f"{label} {num}: {title}" if rest else label + " " + num
+            return f"{label} {num}: {title}" if rest else f"{label} {num}"
 
         # e.g. “3-the-dawn” → “3: The Dawn”
         if lead.isdigit() and len(parts) > 1:
             title = " ".join(p.capitalize() for p in parts[1:])
             return f"{lead}: {title}"
 
-        # otherwise title‑case each ascii chunk, leave non‑ASCII alone
+        # otherwise title‑case each ASCII chunk, leave non‑ASCII alone
         return " ".join(p.capitalize() if p.isascii() else p for p in parts)
 
+    # no distinct volume folder → empty
     return ""
 
 class MyRSSItem(PyRSS2Gen.RSSItem):
