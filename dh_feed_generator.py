@@ -58,9 +58,14 @@ def format_volume_from_url(url: str, main_title: str) -> str:
     segments = [seg for seg in parsed.path.split("/") if seg]
     try:
         # find the segment matching the novel’s slug
+        # 1) lowercase
         clean = main_title.lower()
-        clean = re.sub(r"[^\w\s-]", "", clean)       # drop punctuation
-        slug = re.sub(r"\s+", "-", clean).strip("-") # spaces → hyphens
+        # 2) strip out _all_ ASCII punctuation (keep letters, digits, whitespace, hyphens)
+        clean = re.sub(r"[^\w\s-]", "", clean)
+        # 3) spaces → hyphens
+        slug = re.sub(r"\s+", "-", clean)
+        # 4) collapse any runs of “--” into a single “-”
+        slug = re.sub(r"-{2,}", "-", slug).strip("-")
         idx = segments.index(slug)
         post_slug = segments[idx + 1:]
         if len(post_slug) >= 2:
