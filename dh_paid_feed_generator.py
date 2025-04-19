@@ -26,6 +26,12 @@ def slugify_title(title: str) -> str:
     slug = re.sub(r"[^\w\s-]", "", slug)
     slug = re.sub(r"[\s]+", "-", slug)
     return f"https://dragonholic.com/novel/{slug}/"
+    
+def slug(text: str) -> str:
+    s = text.lower()
+    s = re.sub(r"[^\w\s-]", "", s)
+    s = re.sub(r"\s+", "-", s)
+    return s
 
 def split_title(full_title: str):
     parts = full_title.split(" - ", 1)
@@ -116,12 +122,23 @@ async def scrape_paid_chapters_async(session, base_url: str):
 
                 a = chap_li.find("a")
                 # simple split on the first " - " in the link text:
-                raw_title = a.get_text(" ", strip=True)
-                chap_name, nameext = split_title(raw_title)
+                raw_html = a.decode_contents()
+                
+                # 1) chaptername is everything before the first tag (<)
+                m1 = re.match(r'\s*([^<]+)', raw_html)
+                chap_name = m1.group(1).strip() if m1 else raw_html.strip()
+                
+                # 2) nameextend is whatever follows </i> – …  (drop only that first dash)
+                m2 = re.search(r'</i>\s*[-–]\s*(.+)', raw_html)
+                nameext = m2.group(1).strip() if m2 else ""
                 num_m = re.search(r"(\d+(?:\.\d+)?)", chap_name)
                 chap_id = num_m.group(1) if num_m else ""
                 href = a.get("href","").strip()
-                link = href if href and href != "#" else f"{base_url}{vol_id}/{chap_id}/"
+                if href and href != "#":
+                    link = href
+                else:
+                    # vol_display is e.g. "1 - Chalize is Dead", chap_name is e.g. "9 - The Puppet King, Henry"
+                    link = f"{base_url}{slug(vol_display)}/{slug(chap_name)}/"
 
                 guid = next((c.split("data-chapter-")[1]
                              for c in chap_li.get("class",[])
@@ -152,12 +169,22 @@ async def scrape_paid_chapters_async(session, base_url: str):
 
             a = chap_li.find("a")
             # simple split on the first " - " in the link text:
-            raw_title = a.get_text(" ", strip=True)
-            chap_name, nameext = split_title(raw_title)
+            raw_html = a.decode_contents()
+            
+            # 1) chaptername is everything before the first tag (<)
+            m1 = re.match(r'\s*([^<]+)', raw_html)
+            chap_name = m1.group(1).strip() if m1 else raw_html.strip()
+            
+            # 2) nameextend is whatever follows </i> – …  (drop only that first dash)
+            m2 = re.search(r'</i>\s*[-–]\s*(.+)', raw_html)
+            nameext = m2.group(1).strip() if m2 else ""
             num_m = re.search(r"(\d+(?:\.\d+)?)", chap_name)
             chap_id = num_m.group(1) if num_m else ""
             href = a.get("href","").strip()
-            link = href if href and href != "#" else f"{base_url}chapter-{chap_id}/"
+            if href and href != "#":
+                link = href
+            else:
+                link = f"{base_url}{slug(chap_name)}/"
 
             guid = next((c.split("data-chapter-")[1]
                          for c in chap_li.get("class",[])
