@@ -48,8 +48,6 @@ def chapter_num(chaptername):
         return (0,)
     return tuple(float(n) if '.' in n else int(n) for n in numbers)
 
-from urllib.parse import urlparse, unquote
-
 def smart_title(parts: list[str]) -> str:
     small = {"a","an","the","and","but","or","nor","for","so","yet",
              "at","by","in","of","on","to","up","via"}
