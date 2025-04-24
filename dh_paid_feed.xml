@@ -4,7 +4,7 @@
     <title>Dragonholic Paid Chapters</title>
     <link>https://dragonholic.com</link>
     <description>Aggregated RSS feed for paid chapters across mapped novels.</description>
-    <lastBuildDate>Thu, 24 Apr 2025 11:13:13 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 24 Apr 2025 11:29:19 +0000</lastBuildDate>
     <docs>http://blogs.law.harvard.edu/tech/rss</docs>
     <generator>PyRSS2Gen-1.1.0</generator>
     <item>
@@ -34,7 +34,7 @@
       <discord_role_id><![CDATA[<@&1291243990275985441>]]></discord_role_id>
       <featuredImage url="https://dragonholic.com/wp-content/uploads/2024/09/MHHM.jpg"/>
       <coin>5</coin>
-      <pubDate>Thu, 24 Apr 2025 04:00:00 +0000</pubDate>
+      <pubDate>Thu, 24 Apr 2025 03:00:00 +0000</pubDate>
       <guid isPermaLink="false">22614</guid>
     </item>
     <item>
