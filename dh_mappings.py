@@ -370,7 +370,7 @@ def get_discord_role_id(translator):
     """
     return DISCORD_ROLE_ID_MAP.get(translator, "")
 
-def slug(text: str) -> str: #no longer used, only for ref. Moved to paid generator.
+def slugify(text: str) -> str: #no longer used, only for ref. Moved to paid generator.
     text = text.lower().strip()
     text = re.sub(r"[^\w\s\u0080-\uFFFF-]", "", text)
     text = re.sub(r"[\s_]+", "-", text)
