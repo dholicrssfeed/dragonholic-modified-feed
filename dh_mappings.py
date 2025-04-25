@@ -143,6 +143,9 @@ TRANSLATOR_NOVEL_MAP = {
         "Dare to Cancel the Engagement? I Will Marry Your Ancestor!",
         "Banishment is Fine: As a Genius Saint, I Can Shine Anywhere.",
         "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My Beloved Using My Modern and Game Knowledge"
+    ],
+     "SinisterError": [
+        "I’m the Eldest Son of a Poor Family, but My Magical Talent Awakened While Working Hard for My Family"
     ]
 }
 
@@ -178,7 +181,8 @@ DISCORD_ROLE_ID_MAP = {
     "Wolffy": "<@&1341672309781565551>",
     "Eris81194": "<@&1359458280644284449>",
     "Maomai": "<@&1291253732410920991>",
-    "gediahp": "<@&1362279346441818223>"
+    "gediahp": "<@&1362279346441818223>",
+    "SinisterError": "<@&1364833561135550534>",    
 }
 
 def get_translator(title):
@@ -192,7 +196,7 @@ def get_translator(title):
             if novel in title:
                 return translator
     return None
-
+    
 def get_featured_image(title):
     """
     Determines the featured image URL based on the title
@@ -351,7 +355,7 @@ def get_featured_image(title):
         "Banishment is Fine: As a Genius Saint, I Can Shine Anywhere.":
             "https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-27-21.57.04-A-confident-and-elegant-young-saint-with-golden-hair-and-piercing-blue-eyes-dressed-in-a-flowing-white-robe-standing-proudly-in-front-of-a-grand-tem.webp",
         "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My Beloved Using My Modern and Game Knowledge":
-            "https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-20-19.23.11-A-romantic-yet-eerie-scene-featuring-a-noble-protagonist-and-their-beloved-standing-close-together-in-a-gothic-moonlit-graveyard.-The-protagonist-ha.webp"
+            "https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-20-19.23.11-A-romantic-yet-eerie-scene-featuring-a-noble-protagonist-and-their-beloved-standing-close-together-in-a-gothic-moonlit-graveyard.-The-protagonist-ha.webp"        
     }
     
     for key, url in featured_image_map.items():
@@ -366,6 +370,12 @@ def get_discord_role_id(translator):
     """
     return DISCORD_ROLE_ID_MAP.get(translator, "")
 
+def slug(text: str) -> str: #no longer used, only for ref. Moved to paid generator.
+    text = text.lower().strip()
+    text = re.sub(r"[^\w\s\u0080-\uFFFF-]", "", text)
+    text = re.sub(r"[\s_]+", "-", text)
+    return re.sub(r"-{2,}", "-", text)
+
 # URL overrides for novels – fill in the correct URL for each novel as needed.
 NOVEL_URL_OVERRIDES = {
     "Help others? It’s better to help yourself": "https://dragonholic.com/novel/helping-others-its-better-to-help-yourself/",
@@ -377,7 +387,8 @@ NOVEL_URL_OVERRIDES = {
     "A Moment Too Late (GL)": "https://dragonholic.com/novel/gl-a-moment-too-late/",
     "After Marrying the Disabled Prince (BG)": "https://dragonholic.com/novel/after-marrying-the-disabled-prince/",
     "The Strongest Delivery Man": "https://dragonholic.com/novel/the-strongest-delivery-guy/",
-    "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My Beloved Using My Modern and Game Knowledge": "https://dragonholic.com/novel/the-necromance-of-love-and-death-reincarnated-as-a-tragic-villainous-aristocrat-defeated-early-in-the-game-i-rebel-against-the-scenario-with-my-beloved-modern-knowledge-and-game-knowledge/"
+    "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My Beloved Using My Modern and Game Knowledge": "https://dragonholic.com/novel/the-necromance-of-love-and-death-reincarnated-as-a-tragic-villainous-aristocrat-defeated-early-in-the-game-i-rebel-against-the-scenario-with-my-beloved-modern-knowledge-and-game-knowledge/",
+    "I’m the Eldest Son of a Poor Family, but My Magical Talent Awakened While Working Hard for My Family": "https://dragonholic.com/novel/im-the-eldest-son-of-a-poor-family-but-my-magical-talent-awakened-while-working-hard-for-my-family/"
 }
     
 def get_nsfw_novels():
