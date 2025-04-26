@@ -75,15 +75,23 @@ def format_volume_from_url(url: str) -> str:
         if lead in colon_keywords and len(parts) >= 2 and parts[1].isdigit():
             num  = parts[1]
             rest = parts[2:]
+            # Only add colon if there's additional text after the number
             if lead == "v":
-                return f"V{num}: {smart_title(rest)}" if rest else f"V{num}"
+                if rest:
+                    return f"V{num}: {smart_title(rest)}"
+                else:
+                    return f"V{num}"
             label = lead.capitalize()
-            return f"{label} {num}: {smart_title(rest)}"
+            if rest:
+                return f"{label} {num}: {smart_title(rest)}"
+            else:
+                return f"{label} {num}"
 
         # fallback: smart‑title *all* parts
         return smart_title(parts)
 
     return ""
+ 
 
 class MyRSSItem(PyRSS2Gen.RSSItem):
     def __init__(self, *args, volume="", chaptername="", nameextend="", **kwargs):
