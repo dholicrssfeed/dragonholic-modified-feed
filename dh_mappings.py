@@ -87,9 +87,7 @@ TRANSLATOR_NOVEL_MAP = {'Cannibal Turtle': ['Quick Transmigration: The Villain I
              'Banishment is Fine: As a Genius Saint, I Can Shine Anywhere.',
              'The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a '
              'Tragic Villainous Noble and Rebel Against the Scenario with My Beloved Using My '
-             'Modern and Game Knowledge'],
- 'SinisterError': ['I’m the Eldest Son of a Poor Family, but My Magical Talent Awakened While '
-                   'Working Hard for My Family']}
+             'Modern and Game Knowledge']
 
 # Mapping for Discord role IDs.
 DISCORD_ROLE_ID_MAP = {'Cannibal Turtle': '<@&1286581623848046662>',
@@ -123,7 +121,6 @@ DISCORD_ROLE_ID_MAP = {'Cannibal Turtle': '<@&1286581623848046662>',
  'Eris81194': '<@&1359458280644284449>',
  'Maomai': '<@&1291253732410920991>',
  'gediahp': '<@&1362279346441818223>',
- 'SinisterError': '<@&1364833561135550534>'}
 
 def get_translator(title):
     """
@@ -326,8 +323,7 @@ NOVEL_URL_OVERRIDES = {'Help others? It’s better to help yourself': 'https://d
  'A Moment Too Late (GL)': 'https://dragonholic.com/novel/gl-a-moment-too-late/',
  'After Marrying the Disabled Prince (BG)': 'https://dragonholic.com/novel/after-marrying-the-disabled-prince/',
  'The Strongest Delivery Man': 'https://dragonholic.com/novel/the-strongest-delivery-guy/',
- 'The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My Beloved Using My Modern and Game Knowledge': 'https://dragonholic.com/novel/the-necromance-of-love-and-death-reincarnated-as-a-tragic-villainous-aristocrat-defeated-early-in-the-game-i-rebel-against-the-scenario-with-my-beloved-modern-knowledge-and-game-knowledge/',
- 'I’m the Eldest Son of a Poor Family, but My Magical Talent Awakened While Working Hard for My Family': 'https://dragonholic.com/novel/im-the-eldest-son-of-a-poor-family-but-my-magical-talent-awakened-while-working-hard-for-my-family/'}
+ 'The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My Beloved Using My Modern and Game Knowledge': 'https://dragonholic.com/novel/the-necromance-of-love-and-death-reincarnated-as-a-tragic-villainous-aristocrat-defeated-early-in-the-game-i-rebel-against-the-scenario-with-my-beloved-modern-knowledge-and-game-knowledge/'
     
 def get_nsfw_novels():
     """
