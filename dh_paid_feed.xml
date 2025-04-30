@@ -4,7 +4,7 @@
     <title>Dragonholic Paid Chapters</title>
     <link>https://dragonholic.com</link>
     <description>Aggregated RSS feed for paid chapters across mapped novels.</description>
-    <lastBuildDate>Wed, 30 Apr 2025 07:46:12 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 30 Apr 2025 07:57:02 +0000</lastBuildDate>
     <docs>http://blogs.law.harvard.edu/tech/rss</docs>
     <generator>PyRSS2Gen-1.1.0</generator>
     <item>
@@ -19,7 +19,7 @@
       <discord_role_id><![CDATA[<@&1291243990275985441>]]></discord_role_id>
       <featuredImage url="https://dragonholic.com/wp-content/uploads/2024/09/MHHM.jpg"/>
       <coin>10</coin>
-      <pubDate>Wed, 30 Apr 2025 08:00:00 +0000</pubDate>
+      <pubDate>Wed, 30 Apr 2025 07:00:00 +0000</pubDate>
       <guid isPermaLink="false">23210</guid>
     </item>
     <item>
@@ -34,7 +34,7 @@
       <discord_role_id><![CDATA[<@&1362279346441818223>]]></discord_role_id>
       <featuredImage url="https://dragonholic.com/wp-content/uploads/2025/02/chinese.jpg"/>
       <coin>8</coin>
-      <pubDate>Tue, 29 Apr 2025 16:00:00 +0000</pubDate>
+      <pubDate>Tue, 29 Apr 2025 15:00:00 +0000</pubDate>
       <guid isPermaLink="false">23175</guid>
     </item>
     <item>
@@ -49,7 +49,7 @@
       <discord_role_id><![CDATA[<@&1362279346441818223>]]></discord_role_id>
       <featuredImage url="https://dragonholic.com/wp-content/uploads/2025/02/chinese.jpg"/>
       <coin>8</coin>
-      <pubDate>Tue, 29 Apr 2025 16:00:00 +0000</pubDate>
+      <pubDate>Tue, 29 Apr 2025 15:00:00 +0000</pubDate>
       <guid isPermaLink="false">23174</guid>
     </item>
     <item>
