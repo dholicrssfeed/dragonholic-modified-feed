@@ -2,8 +2,9 @@
 
 This guide explains which elements need to be updated whenever a new novel or translator is added. Please update the following sections in `dh_mappings.py` accordingly.
 
-> **Acknowledgment**
-This project is adapted from Cannibal-Turtle/rss-feed, with custom modifications tailored for the DragonHolic community.
+> ## Acknowledgment
+> 
+> This project is adapted from [Cannibal-Turtle/rss-feed](https://github.com/Cannibal-Turtle/rss-feed), with custom modifications tailored for the DragonHolic community.
 
 ---
 
