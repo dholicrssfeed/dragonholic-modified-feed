@@ -146,6 +146,9 @@ TRANSLATOR_NOVEL_MAP = {
     ],
      "SinisterError": [
         "I’m the Eldest Son of a Poor Family, but My Magical Talent Awakened While Working Hard for My Family"
+    ],
+     "Xueran": [
+        "Little Fish and Mint"
     ]
 }
 
@@ -183,6 +186,7 @@ DISCORD_ROLE_ID_MAP = {
     "Maomai": "<@&1291253732410920991>",
     "gediahp": "<@&1362279346441818223>",
     "SinisterError": "<@&1364833561135550534>",    
+    "Xueran": "<@&478530449979867136>",  
 }
 
 def get_translator(title):
@@ -355,7 +359,9 @@ def get_featured_image(title):
         "Banishment is Fine: As a Genius Saint, I Can Shine Anywhere.":
             "https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-27-21.57.04-A-confident-and-elegant-young-saint-with-golden-hair-and-piercing-blue-eyes-dressed-in-a-flowing-white-robe-standing-proudly-in-front-of-a-grand-tem.webp",
         "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My Beloved Using My Modern and Game Knowledge":
-            "https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-20-19.23.11-A-romantic-yet-eerie-scene-featuring-a-noble-protagonist-and-their-beloved-standing-close-together-in-a-gothic-moonlit-graveyard.-The-protagonist-ha.webp"        
+            "https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-20-19.23.11-A-romantic-yet-eerie-scene-featuring-a-noble-protagonist-and-their-beloved-standing-close-together-in-a-gothic-moonlit-graveyard.-The-protagonist-ha.webp",
+        "Little Fish and Mint":
+            "https://dragonholic.com/wp-content/uploads/2025/05/20241127034846_300_420.jpg"
     }
     
     for key, url in featured_image_map.items():
