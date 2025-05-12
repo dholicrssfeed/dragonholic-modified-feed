@@ -186,7 +186,7 @@ DISCORD_ROLE_ID_MAP = {
     "Maomai": "<@&1291253732410920991>",
     "gediahp": "<@&1362279346441818223>",
     "SinisterError": "<@&1364833561135550534>",    
-    "Xueran": "<@&478530449979867136>",  
+    "Xueran": "<@&1370239063260528750>",  
 }
 
 def get_translator(title):
