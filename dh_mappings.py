@@ -83,9 +83,6 @@ TRANSLATOR_NOVEL_MAP = {
     "Sunnie": [
         "The Three baby mining brothers"
     ],
-    "Yumari": [
-        "After Marrying the Disabled Prince (BG)"
-    ],
     "silversoul": [
         "I Want to Avoid the Bad Ending"
     ],
@@ -149,6 +146,23 @@ TRANSLATOR_NOVEL_MAP = {
     ],
      "Xueran": [
         "Little Fish and Mint"
+    ],
+     "Xyvandar": [
+        "After Going on a Blind Date With My Omega Love Rival"
+        "Failed to Pretend to Be an Alpha and Got Marked by the Enemy"
+        "Transmigrated as a Cannon Fodder Wife A in Ancient Times"
+        "After Transmigrating Into a Book, I Was Forced to Play the Role of a Scumbag Alpha (GL)"
+        "Dressed as the Scumbag Alpha Mom of the Tragic Female Lead"
+        "Transmigrated Into an Ancient Famine Novel as a Scumbag Alpha (ABO, GL)"
+    ],
+     "☾ᵐᵒᵒⁿ — ": [
+        "Within The Sound of Swallows"
+    ],
+     "Bookloverobsess": [
+        "A Hundred Of Beautiful Lives"
+    ],
+     "lumielle": [
+        "Sylvie, the Slave Girl (Lily Futa)"
     ]
 }
 
@@ -171,7 +185,6 @@ DISCORD_ROLE_ID_MAP = {
     "An'er": "<@&1315580006549815306>",
     "amee": "<@&1316342133698854944>",
     "Sunnie": "<@&1316342244676210729>",
-    "Yumari": "<@&1318494118770638858>",
     "silversoul": "<@&1318494169471127552>",
     "ciasuraimu": "<@&1323168986044563561>",
     "Yijuan": "<@&1323169058706690106>",
@@ -187,6 +200,10 @@ DISCORD_ROLE_ID_MAP = {
     "gediahp": "<@&1362279346441818223>",
     "SinisterError": "<@&1364833561135550534>",    
     "Xueran": "<@&1370239063260528750>",  
+    "Xyvandar": "<@&1378148387790262442>",
+    "☾ᵐᵒᵒⁿ": "<@&1378148523597496333>",
+    "Bookloverobsess": "<@&1378148687104184433>",
+    "lumielle": "<@&1378270930752507904>",
 }
 
 def get_translator(title):
@@ -361,7 +378,25 @@ def get_featured_image(title):
         "The Necromance of Love and Death: Defeated Early in the Game, I Reincarnated as a Tragic Villainous Noble and Rebel Against the Scenario with My Beloved Using My Modern and Game Knowledge":
             "https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-20-19.23.11-A-romantic-yet-eerie-scene-featuring-a-noble-protagonist-and-their-beloved-standing-close-together-in-a-gothic-moonlit-graveyard.-The-protagonist-ha.webp",
         "Little Fish and Mint":
-            "https://dragonholic.com/wp-content/uploads/2025/05/20241127034846_300_420.jpg"
+            "https://dragonholic.com/wp-content/uploads/2025/05/20241127034846_300_420.jpg",
+        "After Going on a Blind Date With My Omega Love Rival":
+            "https://dragonholic.com/wp-content/uploads/2025/05/After-Going-on-a-Blind-Date-With-My-Omega-Love-Rival.jpg",
+        "Failed to Pretend to Be an Alpha and Got Marked by the Enemy":
+            "https://dragonholic.com/wp-content/uploads/2025/05/Failed-to-Pretend-to-Be-an-Alpha-and-Got-Marked-by-My-Archenemy.jpg",
+        "Transmigrated as a Cannon Fodder Wife A in Ancient Times":
+            "https://dragonholic.com/wp-content/uploads/2025/05/Transmigrated-as-a-Cannon-Fodder-Wife-A-in-Ancient-Times.jpg",
+        "After Transmigrating Into a Book, I Was Forced to Play the Role of a Scumbag Alpha (GL)":
+            "https://dragonholic.com/wp-content/uploads/2025/06/After-Transmigrating-Into-a-Book-I-Was-Forced-to-Play-the-Role-of-a-Scumbag-Alpha-GL.jpg",
+        "Dressed as the Scumbag Alpha Mom of the Tragic Female Lead":
+            "https://dragonholic.com/wp-content/uploads/2025/05/Dressed-as-the-Scumbag-Alpha-Mom-of-the-Tragic-Female-Lead.jpg",
+        "Transmigrated Into an Ancient Famine Novel as a Scumbag Alpha (ABO, GL)":
+            "https://dragonholic.com/wp-content/uploads/2025/05/Transmigrated-Into-an-Ancient-Famine-Novel-as-a-Scumbag-Alpha-ABO-GL.png",
+        "Within The Sound of Swallows":
+            "https://dragonholic.com/wp-content/uploads/2025/05/WTSOS.jpg",
+        "A Hundred Of Beautiful Lives":
+            "https://dragonholic.com/wp-content/uploads/2025/04/392289038-256-k740149.jpg",
+        "Sylvie, the Slave Girl (Lily Futa)":
+            "https://dragonholic.com/wp-content/uploads/2025/05/sylvie.jpg"
     }
     
     for key, url in featured_image_map.items():
@@ -416,4 +451,5 @@ def get_nsfw_novels():
         "Little Blind Girl",
         "The Young Marquis Regrets Too Late",
         "Wicked Island Of Ireland"
+        "Sylvie, the Slave Girl (Lily Futa)"
     ]
