@@ -148,11 +148,11 @@ TRANSLATOR_NOVEL_MAP = {
         "Little Fish and Mint"
     ],
      "Xyvandar": [
-        "After Going on a Blind Date With My Omega Love Rival"
-        "Failed to Pretend to Be an Alpha and Got Marked by the Enemy"
-        "Transmigrated as a Cannon Fodder Wife A in Ancient Times"
-        "After Transmigrating Into a Book, I Was Forced to Play the Role of a Scumbag Alpha (GL)"
-        "Dressed as the Scumbag Alpha Mom of the Tragic Female Lead"
+        "After Going on a Blind Date With My Omega Love Rival",
+        "Failed to Pretend to Be an Alpha and Got Marked by the Enemy",
+        "Transmigrated as a Cannon Fodder Wife A in Ancient Times",
+        "After Transmigrating Into a Book, I Was Forced to Play the Role of a Scumbag Alpha (GL)",
+        "Dressed as the Scumbag Alpha Mom of the Tragic Female Lead",
         "Transmigrated Into an Ancient Famine Novel as a Scumbag Alpha (ABO, GL)"
     ],
      "☾ᵐᵒᵒⁿ — ": [
