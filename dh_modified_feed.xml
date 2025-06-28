@@ -4,9 +4,25 @@
     <title>Dragonholic - Feed</title>
     <link>https://dragonholic.com</link>
     <description/>
-    <lastBuildDate>Sat, 28 Jun 2025 18:31:48 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 28 Jun 2025 18:50:06 +0000</lastBuildDate>
     <docs>http://blogs.law.harvard.edu/tech/rss</docs>
     <generator>PyRSS2Gen-1.1.0</generator>
+    <item>
+      <title>The Tyrant's Happy Ending</title>
+      <volume/>
+      <chaptername>Chapter 14.2</chaptername>
+      <nameextend/>
+      <link>https://dragonholic.com/novel/the-tyrants-happy-ending/chapter-14-2/</link>
+      <description><![CDATA[BL fantasy novel set in a Western-style Omegaverse. It follows the story of Lyle Beltimore, a duke who rises to power after being betrayed by his first love, Yernen Helio, a prince who later becomes a tyrant. Lyle returns to the capital after years of war and finds Yernen dead.
+However, Yernen reincarnates into the body of Prince Fortnum, Lyle’s new fiancé, and must now navigate his second life, torn between his past regrets and the possibility of a new future with Lyle.
+Themes of love, betrayal, revenge, and redemption are central to the plot, with intense emotional struggles and a chance at a happy ending in Yernen’s second life.]]></description>
+      <category>NSFW</category>
+      <translator>Athena</translator>
+      <discord_role_id><![CDATA[<@&1314845173284343809> <@&1304077473998442506>]]></discord_role_id>
+      <featuredImage url="https://dragonholic.com/wp-content/uploads/2024/10/ty.jpg"/>
+      <pubDate>Sat, 28 Jun 2025 18:26:20 +0000</pubDate>
+      <guid isPermaLink="false">6571</guid>
+    </item>
     <item>
       <title>Sweet Kiss</title>
       <volume/>
@@ -3001,26 +3017,6 @@ If you enjoy my translations and want to sprinkle a little joy in my cup, you ca
       <featuredImage url="https://dragonholic.com/wp-content/uploads/2024/10/20240408222407_200_280.jpg"/>
       <pubDate>Wed, 18 Jun 2025 20:00:00 +0000</pubDate>
       <guid isPermaLink="false">31614</guid>
-    </item>
-    <item>
-      <title>Banishment is Fine: As a Genius Saint, I Can Shine Anywhere.</title>
-      <volume/>
-      <chaptername>Chapter 3</chaptername>
-      <nameextend>***Episode 2.2***</nameextend>
-      <link>https://dragonholic.com/novel/banishment-is-fine-as-a-genius-saint-i-can-shine-anywhere/chapter-3_4/</link>
-      <description><![CDATA[<b>Overview:</b>
-&nbsp;
-<b>"What's wrong with deciding your own path in life? </b>
-&nbsp;
-<span style="font-weight: 400;">Meteora is a chief saint with an extraordinary power. One day, she was suddenly stripped of her title and was demoted. While those around her are in an uproar, she departs with a smile, saying, </span>
-<span style="font-weight: 400;">“Please don't call me back. I'm deeply annoyed with all of you,” she says with a smile and walks away.”</span>
-<span style="font-weight: 400;">A heroic fantasy about an exiled saint!</span>]]></description>
-      <category>SFW</category>
-      <translator>gediahp</translator>
-      <discord_role_id><![CDATA[<@&1362279346441818223>]]></discord_role_id>
-      <featuredImage url="https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-27-21.57.04-A-confident-and-elegant-young-saint-with-golden-hair-and-piercing-blue-eyes-dressed-in-a-flowing-white-robe-standing-proudly-in-front-of-a-grand-tem.webp"/>
-      <pubDate>Wed, 18 Jun 2025 17:47:43 +0000</pubDate>
-      <guid isPermaLink="false">18866</guid>
     </item>
   </channel>
 </rss>
