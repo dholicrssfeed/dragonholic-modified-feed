@@ -4,7 +4,7 @@
     <title>Dragonholic Paid Chapters</title>
     <link>https://dragonholic.com</link>
     <description>Aggregated RSS feed for paid chapters across mapped novels.</description>
-    <lastBuildDate>Thu, 03 Jul 2025 18:46:42 +0000</lastBuildDate>
+    <lastBuildDate>Thu, 03 Jul 2025 18:59:14 +0000</lastBuildDate>
     <docs>http://blogs.law.harvard.edu/tech/rss</docs>
     <generator>PyRSS2Gen-1.1.0</generator>
     <item>
@@ -19,7 +19,7 @@
       <discord_role_id/>
       <featuredImage url="https://dragonholic.com/wp-content/uploads/2025/05/WTSOS.jpg"/>
       <coin>6</coin>
-      <pubDate>Thu, 03 Jul 2025 10:00:00 +0000</pubDate>
+      <pubDate>Thu, 03 Jul 2025 09:00:00 +0000</pubDate>
       <guid isPermaLink="false">37761</guid>
     </item>
     <item>
