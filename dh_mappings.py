@@ -148,12 +148,14 @@ TRANSLATOR_NOVEL_MAP = {
         "Little Fish and Mint"
     ],
      "Xyvandar": [
+        "After Becoming the Abused Heroine in a Campus Story",
         "After Going on a Blind Date With My Omega Love Rival",
-        "Failed to Pretend to Be an Alpha and Got Marked by the Enemy",
-        "Transmigrated as a Cannon Fodder Wife A in Ancient Times",
         "After Transmigrating Into a Book, I Was Forced to Play the Role of a Scumbag Alpha (GL)",
         "Dressed as the Scumbag Alpha Mom of the Tragic Female Lead",
-        "Transmigrated Into an Ancient Famine Novel as a Scumbag Alpha (ABO, GL)"
+        "Failed to Pretend to Be an Alpha and Got Marked by the Enemy",
+        "The Little Bookworm Marked Her Ex-aunt",
+        "Transmigrated as a Cannon Fodder Wife A in Ancient Times",
+        "Transmigrated Into an Ancient Famine Novel as a Scumbag Alpha (ABO, GL)" 
     ],
      "☾ᵐᵒᵒⁿ — ": [
         "Within The Sound of Swallows"
@@ -163,6 +165,12 @@ TRANSLATOR_NOVEL_MAP = {
     ],
      "lumielle": [
         "Sylvie, the Slave Girl (Lily Futa)"
+    ],
+     "Hyera22": [
+        "New Normal",
+        "Mudoo",
+        "Small and Fragile Things",
+        "Defective Banana"
     ]
 }
 
@@ -204,6 +212,7 @@ DISCORD_ROLE_ID_MAP = {
     "☾ᵐᵒᵒⁿ": "<@&1378148523597496333>",
     "Bookloverobsess": "<@&1378148687104184433>",
     "lumielle": "<@&1378270930752507904>",
+    "Hyera22": "<@&1395707595070767104>",
 }
 
 def get_translator(title):
@@ -379,16 +388,20 @@ def get_featured_image(title):
             "https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-20-19.23.11-A-romantic-yet-eerie-scene-featuring-a-noble-protagonist-and-their-beloved-standing-close-together-in-a-gothic-moonlit-graveyard.-The-protagonist-ha.webp",
         "Little Fish and Mint":
             "https://dragonholic.com/wp-content/uploads/2025/05/20241127034846_300_420.jpg",
+        "After Becoming the Abused Heroine in a Campus Story":
+            "https://dragonholic.com/wp-content/uploads/2025/05/After-Going-on-a-Blind-Date-With-My-Omega-Love-Rival.jpg",
         "After Going on a Blind Date With My Omega Love Rival":
             "https://dragonholic.com/wp-content/uploads/2025/05/After-Going-on-a-Blind-Date-With-My-Omega-Love-Rival.jpg",
-        "Failed to Pretend to Be an Alpha and Got Marked by the Enemy":
-            "https://dragonholic.com/wp-content/uploads/2025/05/Failed-to-Pretend-to-Be-an-Alpha-and-Got-Marked-by-My-Archenemy.jpg",
-        "Transmigrated as a Cannon Fodder Wife A in Ancient Times":
-            "https://dragonholic.com/wp-content/uploads/2025/05/Transmigrated-as-a-Cannon-Fodder-Wife-A-in-Ancient-Times.jpg",
         "After Transmigrating Into a Book, I Was Forced to Play the Role of a Scumbag Alpha (GL)":
             "https://dragonholic.com/wp-content/uploads/2025/06/After-Transmigrating-Into-a-Book-I-Was-Forced-to-Play-the-Role-of-a-Scumbag-Alpha-GL.jpg",
         "Dressed as the Scumbag Alpha Mom of the Tragic Female Lead":
             "https://dragonholic.com/wp-content/uploads/2025/05/Dressed-as-the-Scumbag-Alpha-Mom-of-the-Tragic-Female-Lead.jpg",
+        "Failed to Pretend to Be an Alpha and Got Marked by the Enemy":
+            "https://dragonholic.com/wp-content/uploads/2025/05/Failed-to-Pretend-to-Be-an-Alpha-and-Got-Marked-by-My-Archenemy.jpg",
+        "The Little Bookworm Marked Her Ex-aunt":
+            "https://dragonholic.com/wp-content/uploads/2025/07/The-Little-Bookworm-Marked-Her-Ex-aunt.png",
+        "Transmigrated as a Cannon Fodder Wife A in Ancient Times":
+            "https://dragonholic.com/wp-content/uploads/2025/05/Transmigrated-as-a-Cannon-Fodder-Wife-A-in-Ancient-Times.jpg",
         "Transmigrated Into an Ancient Famine Novel as a Scumbag Alpha (ABO, GL)":
             "https://dragonholic.com/wp-content/uploads/2025/05/Transmigrated-Into-an-Ancient-Famine-Novel-as-a-Scumbag-Alpha-ABO-GL.png",
         "Within The Sound of Swallows":
@@ -396,7 +409,15 @@ def get_featured_image(title):
         "A Hundred Of Beautiful Lives":
             "https://dragonholic.com/wp-content/uploads/2025/04/392289038-256-k740149.jpg",
         "Sylvie, the Slave Girl (Lily Futa)":
-            "https://dragonholic.com/wp-content/uploads/2025/05/sylvie.jpg"
+            "https://dragonholic.com/wp-content/uploads/2025/05/sylvie.jpg",
+        "New Normal":
+            "https://dragonholic.com/wp-content/uploads/2025/07/IMG_0632.webp",
+        "Mudoo":
+            "https://dragonholic.com/wp-content/uploads/2025/07/IMG_0773.jpeg",
+        "Small and Fragile Things":
+            "https://dragonholic.com/wp-content/uploads/2025/07/IMG_0771.jpeg",
+        "Defective Banana":
+            "https://dragonholic.com/wp-content/uploads/2025/07/IMG_1209.jpeg"
     }
     
     for key, url in featured_image_map.items():
