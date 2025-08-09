@@ -150,6 +150,7 @@ TRANSLATOR_NOVEL_MAP = {
      "Xyvandar": [
         "After Becoming the Abused Heroine in a Campus Story",
         "After Going on a Blind Date With My Omega Love Rival",
+        "After the Top Idol Omega and I Started Living Together",
         "After Transmigrating Into a Book, I Was Forced to Play the Role of a Scumbag Alpha (GL)",
         "Dressed as the Scumbag Alpha Mom of the Tragic Female Lead",
         "Failed to Pretend to Be an Alpha and Got Marked by the Enemy",
@@ -392,6 +393,8 @@ def get_featured_image(title):
             "https://dragonholic.com/wp-content/uploads/2025/05/After-Going-on-a-Blind-Date-With-My-Omega-Love-Rival.jpg",
         "After Going on a Blind Date With My Omega Love Rival":
             "https://dragonholic.com/wp-content/uploads/2025/05/After-Going-on-a-Blind-Date-With-My-Omega-Love-Rival.jpg",
+        "After the Top Idol Omega and I Started Living Together":
+            "https://dragonholic.com/wp-content/uploads/2025/07/After-the-Top-Idol-Omega-and-I-Started-Living-Together.jpg",
         "After Transmigrating Into a Book, I Was Forced to Play the Role of a Scumbag Alpha (GL)":
             "https://dragonholic.com/wp-content/uploads/2025/06/After-Transmigrating-Into-a-Book-I-Was-Forced-to-Play-the-Role-of-a-Scumbag-Alpha-GL.jpg",
         "Dressed as the Scumbag Alpha Mom of the Tragic Female Lead":
