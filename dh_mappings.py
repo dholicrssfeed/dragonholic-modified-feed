@@ -148,6 +148,7 @@ TRANSLATOR_NOVEL_MAP = {
         "Little Fish and Mint"
     ],
      "Xyvandar": [
+        "Accidentally Marked My Ex’s Crush, the Ice-Cold Goddess O",
         "After Becoming the Abused Heroine in a Campus Story",
         "After Going on a Blind Date With My Omega Love Rival",
         "After the Top Idol Omega and I Started Living Together",
@@ -389,6 +390,8 @@ def get_featured_image(title):
             "https://dragonholic.com/wp-content/uploads/2025/02/DALL·E-2025-02-20-19.23.11-A-romantic-yet-eerie-scene-featuring-a-noble-protagonist-and-their-beloved-standing-close-together-in-a-gothic-moonlit-graveyard.-The-protagonist-ha.webp",
         "Little Fish and Mint":
             "https://dragonholic.com/wp-content/uploads/2025/05/20241127034846_300_420.jpg",
+        "Accidentally Marked My Ex’s Crush, the Ice-Cold Goddess O":
+            "https://dragonholic.com/wp-content/uploads/2025/08/Accidentally-Marked-My-Exs-Crush-the-Ice-Cold-Goddess-O.png",
         "After Becoming the Abused Heroine in a Campus Story":
             "https://dragonholic.com/wp-content/uploads/2025/05/After-Going-on-a-Blind-Date-With-My-Omega-Love-Rival.jpg",
         "After Going on a Blind Date With My Omega Love Rival":
