@@ -173,6 +173,13 @@ TRANSLATOR_NOVEL_MAP = {
         "Mudoo",
         "Small and Fragile Things",
         "Defective Banana"
+    ],
+     "Chel1206": [
+        "Breaking the Taboo (1v2, Blood Uncle and Nephew)",
+        "The Vicious Supporting Villainess’s Chronicle of Serving Pleasure (Historical 1v1, H)"
+    ],
+     "galxscp": [
+        "Strategy to Conquer the Vicious Female Supporting Character [Quick Transmigration]"
     ]
 }
 
@@ -215,6 +222,8 @@ DISCORD_ROLE_ID_MAP = {
     "Bookloverobsess": "<@&1378148687104184433>",
     "lumielle": "<@&1378270930752507904>",
     "Hyera22": "<@&1395707595070767104>",
+    "Chel1206": "<@&1422045826850488340>",
+    "galxscp": "<@&1422044766337499167>",
 }
 
 def get_translator(title):
@@ -423,7 +432,13 @@ def get_featured_image(title):
         "Small and Fragile Things":
             "https://dragonholic.com/wp-content/uploads/2025/07/IMG_0771.jpeg",
         "Defective Banana":
-            "https://dragonholic.com/wp-content/uploads/2025/07/IMG_1209.jpeg"
+            "https://dragonholic.com/wp-content/uploads/2025/07/IMG_1209.jpeg",
+        "Breaking the Taboo (1v2, Blood Uncle and Nephew)":
+            "https://dragonholic.com/wp-content/uploads/2025/09/O20241029002934.jpg",
+        "The Vicious Supporting Villainess’s Chronicle of Serving Pleasure (Historical 1v1, H)":
+            "https://dragonholic.com/wp-content/uploads/2025/09/GPT_Image_1_Chinese_historical_romance_novel_cover_Title_Style_0.png",
+        "Strategy to Conquer the Vicious Female Supporting Character [Quick Transmigration]":
+            "https://dragonholic.com/wp-content/uploads/2025/09/STCTVFSC-QT-novel-pic.png"
     }
     
     for key, url in featured_image_map.items():
