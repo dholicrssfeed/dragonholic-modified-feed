@@ -171,7 +171,7 @@ class CustomRSS2(PyRSS2Gen.RSS2):
 
 def main():
     rss_items = []
-    feed_url = "https://dragonholic.com/feed/manga-chapters/"
+    feed_url = "https://dragonholictranslations.com/feed/free-chapters"
     parsed_feed = feedparser.parse(feed_url)
     for entry in parsed_feed.entries:
         main_title, chaptername, nameextend = split_title(entry.title)
